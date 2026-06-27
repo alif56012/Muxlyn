@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { useEffect } from 'react';
 import { authClient } from '@/shared/api/client';
 import { FullPageSpinner } from '@/shared/components/full-page-spinner';
 

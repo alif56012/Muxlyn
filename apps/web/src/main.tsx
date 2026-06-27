@@ -1,16 +1,18 @@
+import { QueryClientProvider } from '@tanstack/react-query';
+import { createRouter, RouterProvider } from '@tanstack/react-router';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { RouterProvider, createRouter } from '@tanstack/react-router';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from './shared/api/query-client';
-import { authClient } from './shared/api/client';
-import { ErrorBoundary } from './shared/components/error-boundary';
-import { ToastProvider } from './shared/components/toast';
-import { SessionExpiredModal } from './shared/components/session-expired-modal';
 import { routeTree } from './routeTree.gen';
+import { authClient } from './shared/api/client';
+import { queryClient } from './shared/api/query-client';
+import { ErrorBoundary } from './shared/components/error-boundary';
+import { SessionExpiredModal } from './shared/components/session-expired-modal';
+import { ToastProvider } from './shared/components/toast';
 import './plugins';
 import './shared/i18n';
 import './styles/globals.css';
+
+import type { SessionValue } from '@/shared/auth/session';
 
 const router = createRouter({
   routeTree,

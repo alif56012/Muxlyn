@@ -26,9 +26,11 @@ async function request<T>(url: string, options?: RequestInit): Promise<ApiRespon
 
     const sessionWarning = response.headers.get('X-Session-Warning');
     if (sessionWarning === 'expiring') {
-      window.dispatchEvent(new CustomEvent('toast:show', {
-        detail: { message: i18next.t('session.warning'), variant: 'warning' },
-      }));
+      window.dispatchEvent(
+        new CustomEvent('toast:show', {
+          detail: { message: i18next.t('session.warning'), variant: 'warning' },
+        }),
+      );
     }
 
     const body = await response.json().catch(() => null);
@@ -38,8 +40,10 @@ async function request<T>(url: string, options?: RequestInit): Promise<ApiRespon
       if (!sessionStorage.getItem(SESSION_EVENT_KEY)) {
         sessionStorage.setItem(SESSION_EVENT_KEY, '1');
         setTimeout(() => sessionStorage.removeItem(SESSION_EVENT_KEY), 2000);
-        if (errorCode === 'SESSION_EXPIRED') window.dispatchEvent(new CustomEvent('session:expired'));
-        else if (errorCode === 'IP_CHANGED') window.dispatchEvent(new CustomEvent('session:ipChanged'));
+        if (errorCode === 'SESSION_EXPIRED')
+          window.dispatchEvent(new CustomEvent('session:expired'));
+        else if (errorCode === 'IP_CHANGED')
+          window.dispatchEvent(new CustomEvent('session:ipChanged'));
       }
     }
 
@@ -59,6 +63,5 @@ export const api = {
     request<T>(url, { method: 'POST', body: body ? JSON.stringify(body) : undefined }),
   put: <T>(url: string, body?: unknown) =>
     request<T>(url, { method: 'PUT', body: body ? JSON.stringify(body) : undefined }),
-  delete: <T>(url: string) =>
-    request<T>(url, { method: 'DELETE' }),
+  delete: <T>(url: string) => request<T>(url, { method: 'DELETE' }),
 };

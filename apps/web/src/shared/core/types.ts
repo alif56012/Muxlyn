@@ -1,8 +1,8 @@
-import type { ComponentType } from "react";
-import type { LucideIcon } from "lucide-react";
-import type { eventBus } from "./event-bus";
+import type { LucideIcon } from 'lucide-react';
+import type { ComponentType } from 'react';
+import type { eventBus } from './event-bus';
 
-export type ServiceType = "jira" | "google" | (string & {});
+export type ServiceType = 'jira' | 'google' | (string & {});
 
 export interface PluginRoute {
   path: string;
@@ -51,9 +51,33 @@ export interface ServiceConnection {
   serviceType: ServiceType;
   displayName: string;
   url?: string;
-  status: "active" | "expired" | "revoked";
+  status: 'active' | 'expired' | 'revoked';
+  tags: string[];
+  description?: string;
+  pinned: boolean;
+  sortOrder: number;
+  groupId?: string;
+  healthEnabled: boolean;
+  healthInterval: number;
+  healthStatus?: 'alive' | 'slow' | 'down' | 'unknown';
+  healthLastChecked?: string;
   metadata: Record<string, unknown>;
   isActive: boolean;
+}
+
+export interface ServiceGroup {
+  id: string;
+  name: string;
+  color: string;
+  icon?: string | null;
+  sortOrder: number;
+  collapsed: boolean;
+}
+
+export interface ServiceCredential {
+  id: string;
+  keyName: string;
+  createdAt: string;
 }
 
 export interface DashboardCardProps {
@@ -62,7 +86,7 @@ export interface DashboardCardProps {
 }
 
 export interface DashboardSummary {
-  status: "connected" | "not_connected";
+  status: 'connected' | 'not_connected';
   stats?: string;
 }
 
@@ -79,6 +103,8 @@ export interface HubContextValue {
 
 export interface PluginRegistry {
   register(manifest: PluginManifest): void;
+  isInitialized(id: string): boolean;
+  markInitialized(id: string): void;
   getRoutes(): PluginRoute[];
   getNavItems(): PluginNavItem[];
   getDashboardCards(): PluginDashboardCard[];

@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { Moon, Sun } from 'lucide-react';
+import { useEffect } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { useTheme } from '@/shared/stores/theme';
 
@@ -11,7 +11,12 @@ export function ThemeToggle() {
   }, [theme]);
 
   return (
-    <Button variant="ghost" size="icon-md" onClick={toggle} aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+    <Button
+      variant="ghost"
+      size="icon-md"
+      onClick={toggle}
+      aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
       {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
     </Button>
   );

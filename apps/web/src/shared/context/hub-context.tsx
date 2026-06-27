@@ -1,8 +1,8 @@
-import { createContext, useContext, useMemo } from "react";
-import type { ReactNode } from "react";
-import { registry } from "../core/plugin-registry";
-import { eventBus } from "../core/event-bus";
-import type { HubContextValue } from "../core/types";
+import type { ReactNode } from 'react';
+import { createContext, useContext, useMemo } from 'react';
+import { eventBus } from '@/shared/core/event-bus';
+import { registry } from '@/shared/core/plugin-registry';
+import type { HubContextValue } from '@/shared/core/types';
 
 const HubContext = createContext<HubContextValue | null>(null);
 
@@ -25,7 +25,7 @@ function HubProvider({
       events: eventBus,
       activeJiraConnection: activeJiraConnection ?? null,
       activeGoogleConnection: activeGoogleConnection ?? null,
-      locale: locale ?? "en",
+      locale: locale ?? 'en',
       setLocale: setLocale ?? (() => {}),
       t: t ?? ((key: string) => key),
       session: session ?? null,
@@ -39,7 +39,7 @@ function HubProvider({
 function useHub(): HubContextValue {
   const ctx = useContext(HubContext);
   if (!ctx) {
-    throw new Error("useHub() must be used within <HubProvider>");
+    throw new Error('useHub() must be used within <HubProvider>');
   }
   return ctx;
 }

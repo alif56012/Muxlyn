@@ -6,6 +6,9 @@ import { rememberMeRoutes, revokeSessionsRoute } from './modules/auth';
 import { healthModule } from './modules/health';
 import { jiraRoutes } from './modules/jira/jira-routes';
 import { serviceConnectionsRoutes } from './modules/service-connections';
+import { serviceAdvancedRoutes } from './modules/service-connections/service-advanced-routes';
+import { serviceGroupsRoutes } from './modules/service-groups/service-groups-routes';
+import { workflowRoutes } from './modules/workflows/workflow-routes';
 import { authHandler } from './shared/auth/handler';
 import { AuthOpenAPI } from './shared/auth/openapi';
 import { errorMiddleware } from './shared/errors/middleware';
@@ -35,6 +38,8 @@ export const app = new Elysia()
           },
           { name: 'Jira', description: 'Jira account connection management' },
           { name: 'Service Connections', description: 'Generalized external service connection management' },
+          { name: 'Service Groups', description: 'Service group management' },
+          { name: 'Workflows', description: 'Workflow engine — design, run, and monitor workflows' },
           { name: 'Health', description: 'Health check' },
         ],
         paths: betterAuthPaths,
@@ -49,6 +54,9 @@ export const app = new Elysia()
   .use(revokeSessionsRoute)
   .use(jiraRoutes)
   .use(serviceConnectionsRoutes)
+  .use(serviceAdvancedRoutes)
+  .use(serviceGroupsRoutes)
+  .use(workflowRoutes)
   .use(healthModule)
   .all('*', ({ set }) => {
     set.status = 404;

@@ -1,20 +1,30 @@
 import type {
-  PluginManifest,
-  PluginRoute,
-  PluginNavItem,
   PluginDashboardCard,
-  PluginSettingsSection,
+  PluginManifest,
+  PluginNavItem,
   PluginRegistry as PluginRegistryInterface,
-} from "./types";
+  PluginRoute,
+  PluginSettingsSection,
+} from './types';
 
 class PluginRegistry implements PluginRegistryInterface {
   private plugins = new Map<string, PluginManifest>();
+  private initialized = new Set<string>();
 
   register(manifest: PluginManifest): void {
     if (this.plugins.has(manifest.id)) {
-      throw new Error(`Plugin "${manifest.id}" already registered`);
+      return;
     }
     this.plugins.set(manifest.id, manifest);
+    this.initialized.delete(manifest.id);
+  }
+
+  isInitialized(id: string): boolean {
+    return this.initialized.has(id);
+  }
+
+  markInitialized(id: string): void {
+    this.initialized.add(id);
   }
 
   getRoutes(): PluginRoute[] {

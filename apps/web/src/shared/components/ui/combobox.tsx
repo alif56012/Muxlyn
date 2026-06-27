@@ -1,6 +1,5 @@
-import * as React from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
-import { cn } from '@/shared/lib/utils';
+import * as React from 'react';
 import { Button } from '@/shared/components/ui/button';
 import {
   Command,
@@ -11,6 +10,7 @@ import {
   CommandList,
 } from '@/shared/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
+import { cn } from '@/shared/lib/utils';
 
 interface ComboboxOption {
   value: string;
@@ -68,10 +68,7 @@ function Combobox({
                 >
                   <Check
                     size={16}
-                    className={cn(
-                      'mr-2',
-                      value === option.value ? 'opacity-100' : 'opacity-0',
-                    )}
+                    className={cn('mr-2', value === option.value ? 'opacity-100' : 'opacity-0')}
                   />
                   {option.label}
                 </CommandItem>

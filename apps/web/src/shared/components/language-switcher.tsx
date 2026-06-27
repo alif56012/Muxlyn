@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -6,7 +7,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
-import { ChevronDown } from 'lucide-react';
 
 const LOCALES = [
   { code: 'en', label: 'EN', flag: '🇺🇸' },

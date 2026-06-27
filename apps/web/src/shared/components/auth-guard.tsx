@@ -1,9 +1,11 @@
-import { type ReactNode, useEffect, useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { authClient } from '@/shared/api/client';
 import { FullPageSpinner } from '@/shared/components/full-page-spinner';
 
-interface Props { children: ReactNode; }
+interface Props {
+  children: ReactNode;
+}
 
 export function AuthGuard({ children }: Props) {
   const { data: session, isPending } = authClient.useSession();

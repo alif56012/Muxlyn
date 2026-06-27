@@ -1,5 +1,5 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
 import i18next from 'i18next';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -16,7 +16,9 @@ export class ErrorBoundary extends Component<Props, State> {
     this.state = { error: null };
   }
 
-  static getDerivedStateFromError(error: Error): State { return { error }; }
+  static getDerivedStateFromError(error: Error): State {
+    return { error };
+  }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('[ErrorBoundary]', error, info.componentStack);
@@ -32,7 +34,10 @@ export class ErrorBoundary extends Component<Props, State> {
               <p className="text-sm text-muted-foreground">{i18next.t('error.desc')}</p>
               <button
                 type="button"
-                onClick={() => { this.setState({ error: null }); window.location.reload(); }}
+                onClick={() => {
+                  this.setState({ error: null });
+                  window.location.reload();
+                }}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 {i18next.t('error.reload')}

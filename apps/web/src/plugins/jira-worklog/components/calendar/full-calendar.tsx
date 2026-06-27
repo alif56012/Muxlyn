@@ -1,15 +1,20 @@
-import { useState, useCallback, useRef } from 'react';
-import FullCalendar from '@fullcalendar/react';
+import type {
+  DateSelectArg,
+  EventChangeArg,
+  EventClickArg,
+  EventDropArg,
+} from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import type { EventClickArg, DateSelectArg, EventDropArg, EventChangeArg } from '@fullcalendar/core';
-import { Button } from '@/shared/components/ui/button';
+import FullCalendar from '@fullcalendar/react';
+import timeGridPlugin from '@fullcalendar/timegrid';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { Button } from '@/shared/components/ui/button';
 
 type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay';
 
-interface CalendarEvent {
+export interface CalendarEvent {
   id: string;
   title: string;
   start: string;
@@ -31,12 +36,6 @@ interface FullCalendarWrapperProps {
   onEventDrop: (worklogId: string, newDate: string, newHours?: number) => void;
 }
 
-const COLOR_MAP: Record<string, string> = {
-  manual: '#3b82f6',
-  preset: '#22c55e',
-  auto: '#f97316',
-};
-
 const STORAGE_KEY = 'muxlyn-calendar-view';
 
 function getStoredView(): CalendarView {
@@ -45,17 +44,37 @@ function getStoredView(): CalendarView {
     if (stored === 'dayGridMonth' || stored === 'timeGridWeek' || stored === 'timeGridDay') {
       return stored;
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return 'dayGridMonth';
 }
 
-export function FullCalendarWrapper({ events, onEventClick, onDateSelect, onEventDrop }: FullCalendarWrapperProps) {
+export function FullCalendarWrapper({
+  events,
+  onEventClick,
+  onDateSelect,
+  onEventDrop,
+}: FullCalendarWrapperProps) {
   const [currentView, setCurrentView] = useState<CalendarView>(getStoredView);
   const calendarRef = useRef<FullCalendar>(null);
 
   const handleViewChange = useCallback((view: CalendarView) => {
     setCurrentView(view);
     localStorage.setItem(STORAGE_KEY, view);
+    calendarRef.current?.getApi().changeView(view);
+  }, []);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      calendarRef.current?.getApi().updateSize();
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   const handleToday = useCallback(() => {
@@ -77,7 +96,7 @@ export function FullCalendarWrapper({ events, onEventClick, onDateSelect, onEven
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-x-auto">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={handlePrev}>
@@ -105,13 +124,15 @@ export function FullCalendarWrapper({ events, onEventClick, onDateSelect, onEven
         </div>
       </div>
 
-      <FullCalendar
-        ref={calendarRef}
+      <div ref={containerRef}>
+        <FullCalendar
+          ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView={currentView}
         events={events}
         headerToolbar={false}
         height="auto"
+        expandRows={false}
         editable
         selectable
         eventClick={(arg: EventClickArg) => {
@@ -135,7 +156,9 @@ export function FullCalendarWrapper({ events, onEventClick, onDateSelect, onEven
         }}
         eventResize={(arg: EventChangeArg) => {
           const { worklogId } = arg.event.extendedProps as CalendarEvent['extendedProps'];
-          const hours = arg.event.end ? (arg.event.end.getTime() - arg.event.start!.getTime()) / 3600000 : 0;
+          const hours = arg.event.end
+            ? (arg.event.end.getTime() - (arg.event.start?.getTime() ?? 0)) / 3600000
+            : 0;
           onEventDrop(worklogId, arg.event.startStr, hours);
         }}
         dayMaxEventRows={5}
@@ -144,7 +167,6 @@ export function FullCalendarWrapper({ events, onEventClick, onDateSelect, onEven
             handleViewChange('timeGridDay');
             calendarRef.current?.getApi().gotoDate(arg.date);
           }
-          return 'dayGridMonth';
         }}
         eventContent={(arg) => (
           <div className="px-1 py-0.5 text-xs truncate" title={arg.event.title}>
@@ -152,6 +174,7 @@ export function FullCalendarWrapper({ events, onEventClick, onDateSelect, onEven
           </div>
         )}
       />
+      </div>
     </div>
   );
 }

@@ -1,8 +1,8 @@
+import type { Dispatch, SetStateAction } from 'react';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { authClient } from '@/shared/api/client';
 import { buildCallbackURL } from '@/features/auth/utils';
-import type { Dispatch, SetStateAction } from 'react';
+import { authClient } from '@/shared/api/client';
 
 export function useGoogleLogin(
   returnTo: string | null,

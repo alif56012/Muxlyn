@@ -7,9 +7,12 @@ interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const alertVariants: Record<string, string> = {
   default: 'bg-muted text-foreground border-border',
-  destructive: 'border-destructive/50 bg-destructive/5 text-destructive dark:border-destructive [&>svg]:text-destructive',
-  success: 'border-emerald-500/50 bg-emerald-500/5 text-emerald-700 dark:border-emerald-500 [&>svg]:text-emerald-500',
-  warning: 'border-amber-500/50 bg-amber-500/5 text-amber-700 dark:border-amber-500 [&>svg]:text-amber-500',
+  destructive:
+    'border-destructive/50 bg-destructive/5 text-destructive dark:border-destructive [&>svg]:text-destructive',
+  success:
+    'border-emerald-500/50 bg-emerald-500/5 text-emerald-700 dark:border-emerald-500 [&>svg]:text-emerald-500',
+  warning:
+    'border-amber-500/50 bg-amber-500/5 text-amber-700 dark:border-amber-500 [&>svg]:text-amber-500',
 };
 
 const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
@@ -28,12 +31,15 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
 );
 Alert.displayName = 'Alert';
 
-const AlertTitle = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
-  <h5 ref={ref} className={cn('mb-1 font-medium leading-none tracking-tight', className)} {...props} />
-));
+const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
+  ({ className, ...props }, ref) => (
+    <h5
+      ref={ref}
+      className={cn('mb-1 font-medium leading-none tracking-tight', className)}
+      {...props}
+    />
+  ),
+);
 AlertTitle.displayName = 'AlertTitle';
 
 const AlertDescription = React.forwardRef<
@@ -44,4 +50,4 @@ const AlertDescription = React.forwardRef<
 ));
 AlertDescription.displayName = 'AlertDescription';
 
-export { Alert, AlertTitle, AlertDescription };
+export { Alert, AlertDescription, AlertTitle };

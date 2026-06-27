@@ -1,8 +1,14 @@
-import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { CalendarIcon } from 'lucide-react';
-import type { DashboardCardProps } from '@/hub/core/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { useTranslation } from 'react-i18next';
+import type { DashboardCardProps } from '@/shared/core/types';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/shared/components/ui/card';
 
 export default function JiraDashboardCard({ connection, summary }: DashboardCardProps) {
   const { t } = useTranslation();
@@ -18,14 +24,16 @@ export default function JiraDashboardCard({ connection, summary }: DashboardCard
             <CardTitle>{t('nav.jiraManagement')}</CardTitle>
             <CardDescription>
               {isConnected
-                ? summary?.stats ?? t('dashboard.connected')
+                ? (summary?.stats ?? t('dashboard.connected'))
                 : t('dashboard.not_connected')}
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2 text-sm">
-            <span className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-muted-foreground'}`} />
+            <span
+              className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-muted-foreground'}`}
+            />
             <span className="text-muted-foreground">
               {isConnected ? t('jira.connected') : t('jira.no_account')}
             </span>

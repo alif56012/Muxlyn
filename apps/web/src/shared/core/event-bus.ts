@@ -1,25 +1,25 @@
-import mitt from "mitt";
+import mitt from 'mitt';
 
 type HubEvents = {
-  "worklog:created": {
+  'worklog:created': {
     worklogId: string;
     taskKey: string;
     date: string;
     hours: number;
   };
-  "worklog:updated": {
+  'worklog:updated': {
     worklogId: string;
     taskKey: string;
     date: string;
     hours: number;
     changes: Record<string, unknown>;
   };
-  "worklog:deleted": {
+  'worklog:deleted': {
     worklogId: string;
     taskKey: string;
     date: string;
   };
-  "account:switched": {
+  'account:switched': {
     accountId: string;
     jiraUrl: string;
   };

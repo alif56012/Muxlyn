@@ -1,12 +1,12 @@
+import { Check } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { buildCallbackURL, validatePassword } from '@/features/auth/utils';
 import { authClient } from '@/shared/api/client';
 import { Alert } from '@/shared/components/ui/alert';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
-import { buildCallbackURL, validatePassword } from '@/features/auth/utils';
-import { Check } from 'lucide-react';
 
 interface Props {
   returnTo: string | null;
@@ -23,7 +23,10 @@ export function SignUpForm({ returnTo }: Props) {
 
   const passwordRules = [
     { label: t('sign_up.password_rule_length'), test: (pw: string) => pw.length >= 8 },
-    { label: t('sign_up.password_rule_match'), test: (pw: string, confirm: string) => pw.length > 0 && pw === confirm },
+    {
+      label: t('sign_up.password_rule_match'),
+      test: (pw: string, confirm: string) => pw.length > 0 && pw === confirm,
+    },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {

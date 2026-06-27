@@ -1,13 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from '@tanstack/react-router';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/shared/components/ui/modal';
 import { Button } from '@/shared/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/components/ui/modal';
 
 export function SessionExpiredModal() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
+
+  const goToLogin = useCallback(() => {
+    window.location.replace('/login');
+  }, []);
 
   useEffect(() => {
     const handler = () => setOpen(true);
@@ -20,14 +29,16 @@ export function SessionExpiredModal() {
   }, []);
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && navigate({ to: '/login', replace: true })}>
+    <Dialog open={open} onOpenChange={(o) => !o && goToLogin()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t('session.title')}</DialogTitle>
           <DialogDescription>{t('session.desc')}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button onClick={() => navigate({ to: '/login', replace: true })}>{t('session.go_login')}</Button>
+          <Button onClick={goToLogin}>
+            {t('session.go_login')}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,9 +1,12 @@
 import path from 'node:path';
+import process from 'node:process';
 import react from '@vitejs/plugin-react';
+import { tanstackRouterGenerator } from '@tanstack/router-plugin/vite';
 import { defineConfig } from 'vite';
+process.setMaxListeners(20);
 const __dirname = import.meta.dirname;
 export default defineConfig({
-    plugins: [react()],
+    plugins: [tanstackRouterGenerator({ target: 'react' }), react()],
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),

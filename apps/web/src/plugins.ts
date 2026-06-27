@@ -1,5 +1,5 @@
-import { eventBus } from '@/hub/core/event-bus';
-import { registry } from '@/hub/core/plugin-registry';
+import { eventBus } from '@/shared/core/event-bus';
+import { registry } from '@/shared/core/plugin-registry';
 
 // ════════════════════════════════════════════════════════════════
 // Plugin Registration — add new plugins here
@@ -11,9 +11,6 @@ import '@/plugins/_template';
 // Jira Worklog plugin — Unit 16
 import '@/plugins/jira-worklog';
 
-// Smart Worklog plugin — Unit 17
-// import '@/plugins/smart-worklog';
-
 // Reports plugin — future
 // import '@/plugins/reports';
 
@@ -22,16 +19,21 @@ import '@/plugins/jira-worklog';
 // ════════════════════════════════════════════════════════════════
 
 for (const plugin of registry.getAll()) {
-  if (plugin.enabled && plugin.init) {
-    plugin.init({
-      registry,
-      events: eventBus,
-      activeJiraConnection: null,
-      activeGoogleConnection: null,
-      locale: 'en',
-      setLocale: () => {},
-      t: (key: string) => key,
-      session: null,
-    });
+  if (plugin.enabled && plugin.init && !registry.isInitialized(plugin.id)) {
+    registry.markInitialized(plugin.id);
+    try {
+      plugin.init({
+        registry,
+        events: eventBus,
+        activeJiraConnection: null,
+        activeGoogleConnection: null,
+        locale: 'en',
+        setLocale: () => {},
+        t: (key: string) => key,
+        session: null,
+      });
+    } catch (err) {
+      console.error(`[Plugins] Failed to init "${plugin.id}":`, err);
+    }
   }
 }

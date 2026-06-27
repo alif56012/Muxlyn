@@ -11,7 +11,12 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "preset": "recommended"
+      "preset": "recommended",
+      "style": {
+        "noRestrictedImports": {
+          "level": "off"
+        }
+      }
     }
   },
   "formatter": {
@@ -34,6 +39,5 @@
     "linter": {
       "enabled": false
     }
-  },
-  "overrides": []
+  }
 }

@@ -1,8 +1,7 @@
+import { AlertTriangle, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, ChevronDown, Link2 } from 'lucide-react';
-import { useNavigate } from '@tanstack/react-router';
-import { useServiceConnections, useSetActiveConnection } from '@/hub/api/service-connections';
-import { eventBus } from '@/hub/core/event-bus';
+import { useServiceConnections, useSetActiveConnection } from '@/shared/api/service-connections';
+import { eventBus } from '@/shared/core/event-bus';
 import { Button } from '@/shared/components/ui/button';
 import {
   DropdownMenu,
@@ -19,12 +18,13 @@ const STATUS_STYLES: Record<string, string> = {
 
 export function AccountSwitcher() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { data: connections = [], isLoading } = useServiceConnections('jira');
   const setActive = useSetActiveConnection();
 
   const active = connections.find((c) => c.isActive);
-  const expiredCount = connections.filter((c) => c.status === 'expired' || c.status === 'revoked').length;
+  const expiredCount = connections.filter(
+    (c) => c.status === 'expired' || c.status === 'revoked',
+  ).length;
 
   const handleSwitch = async (id: string) => {
     await setActive.mutateAsync(id);
@@ -37,27 +37,26 @@ export function AccountSwitcher() {
     }
   };
 
-  if (isLoading) {
-    return <Button variant="ghost" size="sm" disabled className="gap-2"><ChevronDown size={14} />{t('common.loading')}</Button>;
-  }
-
-  if (connections.length === 0) {
-    return (
-      <Button variant="ghost" size="sm" className="gap-2" onClick={() => navigate({ to: '/hub' })}>
-        <Link2 className="h-4 w-4" />
-        {t('jira.connect')}
-      </Button>
-    );
+  if (isLoading || connections.length === 0) {
+    return null;
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2" disabled={setActive.isPending}>
-          {active?.metadata && typeof active.metadata === 'object' && 'avatarUrl' in active.metadata && (
-            <img src={String(active.metadata.avatarUrl)} alt="" className="h-5 w-5 rounded-full" />
-          )}
-          <span className="max-w-[120px] truncate">{active ? active.displayName : t('jira.no_account')}</span>
+          {active?.metadata &&
+            typeof active.metadata === 'object' &&
+            'avatarUrl' in active.metadata && (
+              <img
+                src={String(active.metadata.avatarUrl)}
+                alt=""
+                className="h-5 w-5 rounded-full"
+              />
+            )}
+          <span className="max-w-[120px] truncate">
+            {active ? active.displayName : t('jira.no_account')}
+          </span>
           {expiredCount > 0 && <AlertTriangle className="h-4 w-4 text-yellow-500" />}
           <ChevronDown size={14} className="opacity-50" />
         </Button>
@@ -77,7 +76,9 @@ export function AccountSwitcher() {
               <p className="text-sm font-medium truncate">{conn.displayName}</p>
               <p className="text-xs text-muted-foreground truncate">{conn.url}</p>
             </div>
-            <span className={`text-xs font-medium ${STATUS_STYLES[conn.status] ?? 'text-muted-foreground'}`}>
+            <span
+              className={`text-xs font-medium ${STATUS_STYLES[conn.status] ?? 'text-muted-foreground'}`}
+            >
               {conn.isActive ? t('jira.active') : t(`jira.${conn.status}`)}
             </span>
           </DropdownMenuItem>

@@ -1,4 +1,4 @@
-import type { PluginManifest } from '@/hub/core/types';
+import type { PluginManifest } from '@/shared/core/types';
 
 export const templateManifest: PluginManifest = {
   id: 'template',

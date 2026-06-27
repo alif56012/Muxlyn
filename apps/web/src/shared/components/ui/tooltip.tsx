@@ -1,18 +1,20 @@
-import * as React from 'react';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
+import * as React from 'react';
 import { cn } from '@/shared/lib/utils';
 
 const TooltipProvider = TooltipPrimitive.Provider;
 
-const Tooltip = ({ children, content, delayDuration = 300 }: {
+const Tooltip = ({
+  children,
+  content,
+  delayDuration = 300,
+}: {
   children: React.ReactNode;
   content: string;
   delayDuration?: number;
 }) => (
   <TooltipPrimitive.Root delayDuration={delayDuration}>
-    <TooltipPrimitive.Trigger asChild>
-      {children}
-    </TooltipPrimitive.Trigger>
+    <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Content
         sideOffset={4}

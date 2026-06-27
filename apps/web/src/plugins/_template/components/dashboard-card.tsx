@@ -1,4 +1,4 @@
-import type { DashboardCardProps } from '@/hub/core/types';
+import type { DashboardCardProps } from '@/shared/core/types';
 
 export function TemplateDashboardCard(_props: DashboardCardProps) {
   return <div>Template Card</div>;

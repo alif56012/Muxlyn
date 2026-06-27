@@ -1,4 +1,4 @@
-import { registry } from '@/hub/core/plugin-registry';
+import { registry } from '@/shared/core/plugin-registry';
 import { templateManifest } from './manifest';
 
 if (templateManifest.enabled) {

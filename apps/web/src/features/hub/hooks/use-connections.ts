@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/shared/api/client';
 import type { JiraConnection } from '@/features/hub/types';
+import { api } from '@/shared/api/client';
 
 export function useConnections() {
   return useQuery({

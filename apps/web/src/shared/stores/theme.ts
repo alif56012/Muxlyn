@@ -19,7 +19,9 @@ function getInitialTheme(): Theme {
 
 function applyTheme(theme: Theme) {
   document.documentElement.classList.toggle('dark', theme === 'dark');
-  try { localStorage.setItem('muxlyn:theme', theme); } catch {}
+  try {
+    localStorage.setItem('muxlyn:theme', theme);
+  } catch {}
 }
 
 export const useTheme = create<ThemeState>((set, get) => ({
