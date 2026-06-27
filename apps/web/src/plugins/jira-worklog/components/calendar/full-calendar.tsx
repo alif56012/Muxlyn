@@ -9,8 +9,10 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
+import thLocale from '@fullcalendar/core/locales/th';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/components/ui/button';
 
 type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay';
@@ -45,11 +47,6 @@ interface FullCalendarWrapperProps {
   dayCellClasses?: (date: string) => string[];
 }
 
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
-
 const STORAGE_KEY = 'muxlyn-calendar-view';
 
 function getStoredView(): CalendarView {
@@ -73,6 +70,7 @@ export function FullCalendarWrapper({
   onDatesSet,
   dayCellClasses,
 }: FullCalendarWrapperProps) {
+  const { t, i18n } = useTranslation();
   const [currentView, setCurrentView] = useState<CalendarView>(getStoredView);
   const [title, setTitle] = useState('');
   const calendarRef = useRef<FullCalendar>(null);
@@ -124,9 +122,9 @@ export function FullCalendarWrapper({
   }, []);
 
   const viewLabel: Record<CalendarView, string> = {
-    dayGridMonth: 'Month',
-    timeGridWeek: 'Week',
-    timeGridDay: 'Day',
+    dayGridMonth: t('common.month'),
+    timeGridWeek: t('common.week'),
+    timeGridDay: t('common.day'),
   };
 
   return (
@@ -144,7 +142,7 @@ export function FullCalendarWrapper({
             <ChevronRight className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="sm" onClick={handleToday} className="text-xs">
-            Today
+            {t('common.today')}
           </Button>
         </div>
 
@@ -176,6 +174,9 @@ export function FullCalendarWrapper({
           fixedWeekCount={false}
           editable
           selectable
+          firstDay={0}
+          locales={[thLocale]}
+          locale={i18n.language === 'th' ? 'th' : 'en'}
           eventDurationEditable={false}
           eventClick={(arg: EventClickArg) => {
             const event = arg.event;
@@ -211,26 +212,19 @@ export function FullCalendarWrapper({
             const to = arg.endStr.slice(0, 10);
             onDatesSet?.(from, to);
 
-            // update title: "June 2026" for month, "Jun 22 – 28, 2026" for week
             const api = arg.view.calendar;
             const date = api.getDate();
             const viewType = arg.view.type;
             if (viewType === 'dayGridMonth') {
-              setTitle(`${MONTHS[date.getMonth()]} ${date.getFullYear()}`);
+              setTitle(date.toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' }));
             } else if (viewType === 'timeGridWeek') {
               const end = new Date(date);
               end.setDate(end.getDate() + 6);
-              const sameMonth = date.getMonth() === end.getMonth();
-              const sameYear = date.getFullYear() === end.getFullYear();
-              if (sameMonth && sameYear) {
-                setTitle(`${MONTHS[date.getMonth()]} ${date.getDate()} – ${end.getDate()}, ${date.getFullYear()}`);
-              } else if (sameYear) {
-                setTitle(`${MONTHS[date.getMonth()]} ${date.getDate()} – ${MONTHS[end.getMonth()]} ${end.getDate()}, ${date.getFullYear()}`);
-              } else {
-                setTitle(`${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()} – ${MONTHS[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`);
-              }
+              const startStr = date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' });
+              const endStr = end.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric', year: 'numeric' });
+              setTitle(`${startStr} – ${endStr}`);
             } else {
-              setTitle(`${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`);
+              setTitle(date.toLocaleDateString(i18n.language, { month: 'long', day: 'numeric', year: 'numeric' }));
             }
           }}
           dayMaxEventRows={4}

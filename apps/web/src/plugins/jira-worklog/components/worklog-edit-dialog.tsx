@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, Loader2, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
@@ -36,6 +37,7 @@ export function WorklogEditDialog({
   onSuccess,
   onDelete,
 }: WorklogEditDialogProps) {
+  const { t } = useTranslation();
   const { data: worklog, isLoading } = useWorklog(worklogId, issueId);
   const { data: issue } = useIssueInfo(issueId);
 
@@ -118,7 +120,7 @@ export function WorklogEditDialog({
       <DialogContent className="w-[calc(100%-2rem)] sm:max-w-[400px] gap-0 p-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
           <DialogTitle className="text-base font-semibold">
-            Edit Worklog
+            {t('worklog.edit_worklog')}
           </DialogTitle>
           <DialogDescription className="text-xs leading-normal pt-1 w-full overflow-hidden">
             {issue ? (
@@ -127,7 +129,7 @@ export function WorklogEditDialog({
                 <span className="truncate">{issue.summary}</span>
               </span>
             ) : (
-              'Loading issue details...'
+              t('common.loading')
             )}
           </DialogDescription>
         </DialogHeader>
@@ -144,7 +146,7 @@ export function WorklogEditDialog({
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5" />
-                Date &amp; Start
+                {t('worklog.date_start')}
               </Label>
               <div className="flex flex-col sm:flex-row gap-2">
                 <DatePicker
@@ -167,7 +169,7 @@ export function WorklogEditDialog({
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5" />
-                Duration
+                {t('worklog.duration_per_day')}
               </Label>
               <div className="flex items-center gap-2">
                 <div className="flex-1 flex items-center gap-1.5">
@@ -178,9 +180,9 @@ export function WorklogEditDialog({
                     value={hours || ''}
                     placeholder="0"
                     onChange={(e) => setHours(Math.max(0, Math.min(24, parseInt(e.target.value) || 0)))}
-                    className="h-9 text-center"
+                    className="h-9 text-center text-sm"
                   />
-                  <span className="text-sm text-muted-foreground font-medium">h</span>
+                  <span className="text-sm text-muted-foreground font-medium">{t('worklog.hours')}</span>
                 </div>
                 <div className="flex-1 flex items-center gap-1.5">
                   <Input
@@ -190,7 +192,7 @@ export function WorklogEditDialog({
                     value={minutes || ''}
                     placeholder="0"
                     onChange={(e) => setMinutes(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
-                    className="h-9 text-center"
+                    className="h-9 text-center text-sm"
                   />
                   <span className="text-sm text-muted-foreground font-medium">m</span>
                 </div>
@@ -199,7 +201,7 @@ export function WorklogEditDialog({
 
             <div className="space-y-1.5">
               <Label htmlFor="edit-comment" className="text-xs text-muted-foreground">
-                Comment
+                {t('worklog.comment')}
               </Label>
               <Textarea
                 id="edit-comment"
@@ -228,12 +230,12 @@ export function WorklogEditDialog({
             <Button
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1.5"
+              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1.5 text-xs px-2.5 h-8"
               onClick={onDelete}
               disabled={updateMutation.isPending}
             >
               <Trash2 className="h-4 w-4" />
-              Delete
+              {t('common.delete')}
             </Button>
             <div className="flex items-center gap-2">
               <Button
@@ -242,7 +244,7 @@ export function WorklogEditDialog({
                 onClick={handleClose}
                 disabled={updateMutation.isPending}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button
                 size="sm"
@@ -252,7 +254,7 @@ export function WorklogEditDialog({
                 {updateMutation.isPending && (
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
                 )}
-                Save
+                {updateMutation.isPending ? t('worklog.saving') : t('worklog.save_changes')}
               </Button>
             </div>
           </div>

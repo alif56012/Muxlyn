@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Search, Loader2, CheckCircle2, XCircle, Calendar, Clock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
@@ -54,8 +55,8 @@ function isWeekend(dateStr: string): boolean {
   return day === 0 || day === 6;
 }
 
-function formatDisplayDate(d: string): string {
-  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', {
+function formatDisplayDate(d: string, locale: string): string {
+  return new Date(d + 'T00:00:00').toLocaleDateString(locale, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -68,6 +69,7 @@ export function CalendarCreateDialog({
   onOpenChange,
   onCreated,
 }: CalendarCreateDialogProps) {
+  const { t, i18n } = useTranslation();
   const [searchText, setSearchText] = useState('');
   const [results, setResults] = useState<IssueSearchItem[] | null>(null);
   const [selectedIssue, setSelectedIssue] = useState<IssueSearchItem | null>(null);
@@ -165,13 +167,13 @@ export function CalendarCreateDialog({
       ? createMutation.data.message
       : null;
 
-  const displayDate = formatDisplayDate(date);
+  const displayDate = formatDisplayDate(date, i18n.language);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="w-[calc(100%-2rem)] sm:max-w-[440px] gap-0 p-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
-          <DialogTitle className="text-base font-semibold">Log Work</DialogTitle>
+          <DialogTitle className="text-base font-semibold">{t('worklog.log_work')}</DialogTitle>
           <DialogDescription className="text-xs pt-1">{displayDate}</DialogDescription>
         </DialogHeader>
 
@@ -179,11 +181,12 @@ export function CalendarCreateDialog({
           <div className="px-6 py-6 space-y-4">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-green-600" />
-              <span className="font-semibold">
-                {result.succeeded} saved{result.failed > 0 && <span className="text-destructive"> · {result.failed} failed</span>}
+              <span className="font-semibold text-sm">
+                {t('worklog.saved_success', { count: result.succeeded })}
+                {result.failed > 0 && <span className="text-destructive"> · {t('worklog.saved_failed', { count: result.failed })}</span>}
               </span>
             </div>
-            <p className="text-sm text-muted-foreground">Total: {result.totalHours}h</p>
+            <p className="text-sm text-muted-foreground">{t('worklog.total_hours', { hours: result.totalHours })}</p>
             {result.results.length > 0 && (
               <div className="max-h-40 overflow-y-auto space-y-1 rounded-md border p-3">
                 {result.results.map((r, i) => (
@@ -211,20 +214,22 @@ export function CalendarCreateDialog({
                 ))}
               </div>
             )}
-            <Button variant="outline" onClick={handleClose} className="w-full">Close</Button>
+            <Button variant="outline" onClick={handleClose} className="w-full">{t('common.close')}</Button>
           </div>
         ) : (
           <>
             <div className="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
               {/* Issue Input & Search */}
               <div className="space-y-1.5">
-                <Label htmlFor="issue-key" className="text-xs text-muted-foreground">Jira Issue (Key or Search)</Label>
+                <Label htmlFor="issue-key" className="text-xs text-muted-foreground">
+                  {t('plugin.jiraWorklog.name')} ({t('worklog.search_button')} / Key)
+                </Label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="issue-key"
-                      placeholder="Enter key (e.g. LMP-5472) or search..."
+                      placeholder={t('worklog.search_placeholder_dialog')}
                       value={searchText}
                       onChange={(e) => {
                         setSearchText(e.target.value);
@@ -242,7 +247,7 @@ export function CalendarCreateDialog({
                     disabled={isLoading || !searchText.trim()}
                   >
                     {searchMutation.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-                    Search
+                    {t('worklog.search_button')}
                   </Button>
                 </div>
                 {selectedIssue && (
@@ -286,11 +291,11 @@ export function CalendarCreateDialog({
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5" />
-                  Date &amp; Start
+                  {t('worklog.date_start')}
                 </Label>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <div className="flex-1 space-y-1">
-                    <Label className="text-[10px] text-muted-foreground">Start Date</Label>
+                    <Label className="text-[10px] text-muted-foreground">{t('worklog.start_date')}</Label>
                     <DatePicker
                       value={dateFrom}
                       onChange={(v) => {
@@ -302,7 +307,7 @@ export function CalendarCreateDialog({
                     />
                   </div>
                   <div className="flex-1 space-y-1">
-                    <Label className="text-[10px] text-muted-foreground">End Date</Label>
+                    <Label className="text-[10px] text-muted-foreground">{t('worklog.end_date')}</Label>
                     <DatePicker
                       value={dateTo}
                       onChange={(v) => {
@@ -316,7 +321,7 @@ export function CalendarCreateDialog({
                 </div>
                 <div className="pt-1">
                   <div className="space-y-1">
-                    <Label className="text-[10px] text-muted-foreground">Start Time</Label>
+                    <Label className="text-[10px] text-muted-foreground">{t('worklog.start_time')}</Label>
                     <TimePicker
                       value={`${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}`}
                       onChange={(timeVal) => {
@@ -328,7 +333,7 @@ export function CalendarCreateDialog({
                   </div>
                 </div>
                 {dayCount > 1 && (
-                  <p className="text-[11px] text-muted-foreground">{dayCount} days</p>
+                  <p className="text-[11px] text-muted-foreground">{t('worklog.entry', { count: dayCount })}</p>
                 )}
               </div>
 
@@ -336,7 +341,7 @@ export function CalendarCreateDialog({
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5" />
-                  Duration per day
+                  {t('worklog.duration_per_day')}
                 </Label>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 flex items-center gap-1.5">
@@ -349,7 +354,7 @@ export function CalendarCreateDialog({
                       onChange={(e) => setHours(Math.max(0, Math.min(24, parseInt(e.target.value) || 0)))}
                       className="h-9 text-center text-sm"
                     />
-                    <span className="text-sm text-muted-foreground font-medium">h</span>
+                    <span className="text-sm text-muted-foreground font-medium">{t('worklog.hours')}</span>
                   </div>
                   <div className="flex-1 flex items-center gap-1.5">
                     <Input
@@ -368,7 +373,7 @@ export function CalendarCreateDialog({
 
               {/* Comment */}
               <div className="space-y-1.5">
-                <Label htmlFor="create-comment" className="text-xs text-muted-foreground">Comment</Label>
+                <Label htmlFor="create-comment" className="text-xs text-muted-foreground">{t('worklog.comment')}</Label>
                 <Textarea
                   id="create-comment"
                   value={comment}
@@ -389,7 +394,7 @@ export function CalendarCreateDialog({
                   htmlFor="skip-weekends-active"
                   className="text-xs text-muted-foreground font-normal cursor-pointer select-none"
                 >
-                  Skip weekends (Sat/Sun)
+                  {t('worklog.skip_weekends')}
                 </Label>
               </div>
 
@@ -402,11 +407,11 @@ export function CalendarCreateDialog({
 
             <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/30">
               <div className="text-sm text-muted-foreground">
-                {dayCount} {dayCount === 1 ? 'day' : 'days'} · {totalHours}h total
+                {t('worklog.entry', { count: dayCount })} · {t('worklog.total_hours', { hours: totalHours })}
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={handleClose} disabled={isLoading}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   size="sm"
@@ -420,7 +425,7 @@ export function CalendarCreateDialog({
                   }
                 >
                   {createMutation.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-                  Log {totalHours}h
+                  {t('worklog.log_hours', { hours: totalHours })}
                 </Button>
               </div>
             </div>

@@ -1,14 +1,19 @@
 import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
+import { useTranslation } from 'react-i18next';
+import { th, enUS } from 'date-fns/locale';
 import { cn } from '@/shared/lib/utils';
 import { buttonVariants } from './button';
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
 function Calendar({ className, classNames, showOutsideDays = true, ...props }: CalendarProps) {
+  const { i18n } = useTranslation();
   const currentYear = new Date().getFullYear();
   const defaultStartMonth = new Date(currentYear - 20, 0); // 20 years ago
   const defaultEndMonth = new Date(currentYear + 10, 11);  // 10 years in the future
+
+  const activeLocale = i18n.language === 'th' ? th : enUS;
 
   const defaultClassNames = {
     months: 'flex flex-col sm:flex-row gap-4',
@@ -61,6 +66,8 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
       captionLayout="dropdown"
       startMonth={props.startMonth ?? defaultStartMonth}
       endMonth={props.endMonth ?? defaultEndMonth}
+      locale={activeLocale}
+      weekStartsOn={0}
       components={{
         Chevron: ({ orientation }) => {
           if (orientation === 'left') {
