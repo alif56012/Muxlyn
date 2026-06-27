@@ -4,7 +4,7 @@ export const jiraConnections = pgTable(
   'jira_connections',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    userId: uuid('user_id').notNull(),
+    userId: text('user_id').notNull(),
     jiraUrl: text('jira_url').notNull(),
     jiraAccountId: text('jira_account_id').notNull(),
     displayName: text('display_name'),

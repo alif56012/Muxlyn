@@ -108,6 +108,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'hub.revoking': 'Revoking...',
 
     'jira.active': 'Active',
+    'jira.expired': 'Expired',
+    'jira.revoked': 'Revoked',
     'jira.no_account': 'No Jira account',
     'jira.switch': 'Switch',
     'jira.update_token': 'Update Token',
@@ -149,6 +151,33 @@ export const translations: Record<Locale, Record<string, string>> = {
     'draft.unsaved': 'You have unsaved work from your previous session. Would you like to restore it?',
     'draft.clear': 'Clear',
     'draft.restore': 'Restore',
+
+    'nav.home': 'Home',
+    'nav.dashboard': 'Dashboard',
+    'nav.jiraManagement': 'Jira Management',
+    'nav.worklog': 'Worklog',
+    'nav.worklogHistory': 'History',
+    'nav.settings': 'Settings',
+
+    'plugin.jiraWorklog.name': 'Jira Worklog',
+
+    'dashboard.connected': 'Connected',
+    'dashboard.not_connected': 'Not connected',
+    'dashboard.connect_now': 'Connect now',
+
+    'worklog.search_placeholder': 'Search and create worklog entries.',
+    'worklog.history_placeholder': 'View your worklog history.',
+
+    'settings.account': 'Account',
+    'settings.google_account': 'Google Account',
+    'settings.google_account_desc': 'Your connected Google account information.',
+    'settings.connections': 'Connections',
+    'settings.jira_connections': 'Jira Connections',
+    'settings.language': 'Language',
+    'settings.language_desc': 'Choose your preferred language.',
+
+    'dashboard.empty': 'No services available yet.',
+    'dashboard.setup_connections': 'Set up connections',
 
     'error.title': 'Something went wrong',
     'error.desc': 'An unexpected error occurred. Try refreshing the page.',
@@ -261,6 +290,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'hub.revoking': 'กำลังดำเนินการ...',
 
     'jira.active': 'ใช้งานอยู่',
+    'jira.expired': 'หมดอายุ',
+    'jira.revoked': 'ถูกเพิกถอน',
     'jira.no_account': 'ไม่มีบัญชี Jira',
     'jira.switch': 'สลับ',
     'jira.update_token': 'อัปเดตโทเค็น',
@@ -302,6 +333,33 @@ export const translations: Record<Locale, Record<string, string>> = {
     'draft.unsaved': 'คุณมีงานที่ยังไม่ได้บันทึกจากเซสชันก่อนหน้า ต้องการกู้คืนหรือไม่?',
     'draft.clear': 'ล้าง',
     'draft.restore': 'กู้คืน',
+
+    'nav.home': 'หน้าแรก',
+    'nav.dashboard': 'แดชบอร์ด',
+    'nav.jiraManagement': 'จัดการ Jira',
+    'nav.worklog': 'บันทึกงาน',
+    'nav.worklogHistory': 'ประวัติ',
+    'nav.settings': 'ตั้งค่า',
+
+    'plugin.jiraWorklog.name': 'บันทึกงาน Jira',
+
+    'dashboard.connected': 'เชื่อมต่อแล้ว',
+    'dashboard.not_connected': 'ยังไม่ได้เชื่อมต่อ',
+    'dashboard.connect_now': 'เชื่อมต่อเลย',
+
+    'worklog.search_placeholder': 'ค้นหาและสร้างบันทึกงาน',
+    'worklog.history_placeholder': 'ดูประวัติการบันทึกงาน',
+
+    'settings.account': 'บัญชี',
+    'settings.google_account': 'บัญชี Google',
+    'settings.google_account_desc': 'ข้อมูลบัญชี Google ที่เชื่อมต่อ',
+    'settings.connections': 'การเชื่อมต่อ',
+    'settings.jira_connections': 'การเชื่อมต่อ Jira',
+    'settings.language': 'ภาษา',
+    'settings.language_desc': 'เลือกภาษาที่ต้องการ',
+
+    'dashboard.empty': 'ยังไม่มีบริการให้ใช้งาน',
+    'dashboard.setup_connections': 'ตั้งค่าการเชื่อมต่อ',
 
     'error.title': 'เกิดข้อผิดพลาด',
     'error.desc': 'เกิดข้อผิดพลาดที่ไม่คาดคิด ลองรีเฟรชหน้า',

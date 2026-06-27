@@ -76,7 +76,7 @@ async function migrate() {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS "jira_connections" (
         "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        "user_id" UUID NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
+        "user_id" TEXT NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
         "jira_url" TEXT NOT NULL,
         "jira_account_id" TEXT NOT NULL,
         "display_name" TEXT,
@@ -96,6 +96,31 @@ async function migrate() {
         ON "jira_connections" ("user_id");
       CREATE INDEX IF NOT EXISTS "idx_jira_connections_active"
         ON "jira_connections" ("user_id", "is_active") WHERE "is_active" = true;
+    `);
+
+    console.log('Running service_connections migration...');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "service_connections" (
+        "id" TEXT PRIMARY KEY,
+        "user_id" TEXT NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
+        "service_type" TEXT NOT NULL,
+        "display_name" TEXT NOT NULL,
+        "url" TEXT,
+        "encrypted_token" TEXT NOT NULL,
+        "status" TEXT NOT NULL DEFAULT 'active',
+        "metadata" JSONB NOT NULL DEFAULT '{}',
+        "is_active" BOOLEAN NOT NULL DEFAULT true,
+        "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE UNIQUE INDEX IF NOT EXISTS "idx_service_connections_user_service_url"
+        ON "service_connections" ("user_id", "service_type", COALESCE("url", ''));
+      CREATE INDEX IF NOT EXISTS "idx_service_connections_user_type"
+        ON "service_connections" ("user_id", "service_type");
+      CREATE INDEX IF NOT EXISTS "idx_service_connections_user_active"
+        ON "service_connections" ("user_id", "is_active");
     `);
 
     console.log('Migrations complete.');

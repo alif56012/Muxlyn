@@ -1,14 +1,34 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { RouterProvider } from '@tanstack/react-router';
+import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { router } from './router';
 import { queryClient } from './shared/api/query-client';
+import { authClient } from './shared/api/client';
 import { ErrorBoundary } from './shared/components/error-boundary';
 import { ToastProvider } from './shared/components/toast';
 import { SessionExpiredModal } from './shared/components/session-expired-modal';
+import { routeTree } from './routeTree.gen';
+import './plugins';
 import './shared/i18n';
 import './styles/globals.css';
+
+const router = createRouter({
+  routeTree,
+  context: { session: null },
+  defaultPreload: 'intent',
+});
+
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router;
+  }
+}
+
+function InnerApp() {
+  const { data: session } = authClient.useSession();
+
+  return <RouterProvider router={router} context={{ session }} />;
+}
 
 const root = document.getElementById('root');
 if (root) {
@@ -18,7 +38,7 @@ if (root) {
         <QueryClientProvider client={queryClient}>
           <ToastProvider />
           <SessionExpiredModal />
-          <RouterProvider router={router} />
+          <InnerApp />
         </QueryClientProvider>
       </ErrorBoundary>
     </React.StrictMode>,

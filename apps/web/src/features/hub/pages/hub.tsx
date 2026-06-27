@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
-import { authClient } from '@/shared/api/client';
+import { api, authClient } from '@/shared/api/client';
 import { AccountSwitcher } from '@/features/hub/components/account-switcher';
 import { ConnectForm } from '@/features/hub/components/connect-form';
 import { ConnectionList } from '@/features/hub/components/connection-list';
@@ -14,7 +14,7 @@ import { Skeleton } from '@/shared/components/ui/skeleton';
 export function HubPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending: sessionLoading } = authClient.useSession();
   const { data: connections = [], isLoading } = useConnections();
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -25,18 +25,23 @@ export function HubPage() {
     return () => window.removeEventListener('session:ipChanged', h);
   }, [navigate]);
 
+  if (sessionLoading) return null;
   if (!session) return null;
 
   const handleSignOut = async () => {
     setSigningOut(true);
-    try { await authClient.signOut(); } catch { /* fall through */ }
-    navigate({ to: '/login', replace: true });
+    try { await authClient.signOut(); } catch { /* redirect anyway */ }
+    window.location.href = '/login';
   };
 
   const handleRevokeAll = async () => {
-    try { await authClient.revokeSessions(); } catch { /* fall through */ }
     setShowRevokeConfirm(false);
-    navigate({ to: '/login', replace: true });
+    try {
+      await api.post('/api/auth/revoke-sessions');
+    } catch {
+      try { await authClient.signOut(); } catch { /* fall through */ }
+    }
+    window.location.href = '/login';
   };
 
   return (
