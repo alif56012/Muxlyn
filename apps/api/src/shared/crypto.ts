@@ -24,4 +24,13 @@ export async function encryptToken(plaintext: string, encryptionKey: string, use
   return btoa(String.fromCharCode(...combined));
 }
 
+export async function decryptToken(encryptedBase64: string, encryptionKey: string, userId?: string): Promise<string> {
+  const key = await getCryptoKey(encryptionKey, userId);
+  const combined = Uint8Array.from(atob(encryptedBase64), (c) => c.charCodeAt(0));
+  const iv = combined.slice(0, 12);
+  const ciphertext = combined.slice(12);
+  const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+  return new TextDecoder().decode(decrypted);
+}
+
 export { encoder };

@@ -41,6 +41,11 @@ export function AccountSwitcher() {
     return null;
   }
 
+  const activeEmail =
+    active?.metadata && typeof active.metadata === 'object' && 'email' in active.metadata
+      ? String(active.metadata.email)
+      : null;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -55,34 +60,40 @@ export function AccountSwitcher() {
               />
             )}
           <span className="max-w-[120px] truncate">
-            {active ? active.displayName : t('jira.no_account')}
+            {active ? activeEmail || active.displayName : t('jira.no_account')}
           </span>
           {expiredCount > 0 && <AlertTriangle className="h-4 w-4 text-yellow-500" />}
           <ChevronDown size={14} className="opacity-50" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
-        {connections.map((conn) => (
-          <DropdownMenuItem
-            key={conn.id}
-            onClick={() => handleSwitch(conn.id)}
-            disabled={conn.isActive || setActive.isPending}
-            className="gap-3"
-          >
-            {conn.metadata && typeof conn.metadata === 'object' && 'avatarUrl' in conn.metadata && (
-              <img src={String(conn.metadata.avatarUrl)} alt="" className="h-8 w-8 rounded-full" />
-            )}
-            <div className="flex-1 text-left min-w-0">
-              <p className="text-sm font-medium truncate">{conn.displayName}</p>
-              <p className="text-xs text-muted-foreground truncate">{conn.url}</p>
-            </div>
-            <span
-              className={`text-xs font-medium ${STATUS_STYLES[conn.status] ?? 'text-muted-foreground'}`}
+        {connections.map((conn) => {
+          const connEmail =
+            conn.metadata && typeof conn.metadata === 'object' && 'email' in conn.metadata
+              ? String(conn.metadata.email)
+              : null;
+          return (
+            <DropdownMenuItem
+              key={conn.id}
+              onClick={() => handleSwitch(conn.id)}
+              disabled={conn.isActive || setActive.isPending}
+              className="gap-3"
             >
-              {conn.isActive ? t('jira.active') : t(`jira.${conn.status}`)}
-            </span>
-          </DropdownMenuItem>
-        ))}
+              {conn.metadata && typeof conn.metadata === 'object' && 'avatarUrl' in conn.metadata && (
+                <img src={String(conn.metadata.avatarUrl)} alt="" className="h-8 w-8 rounded-full" />
+              )}
+              <div className="flex-1 text-left min-w-0">
+                <p className="text-sm font-medium truncate">{connEmail || conn.displayName}</p>
+                <p className="text-xs text-muted-foreground truncate">{conn.url}</p>
+              </div>
+              <span
+                className={`text-xs font-medium ${STATUS_STYLES[conn.status] ?? 'text-muted-foreground'}`}
+              >
+                {conn.isActive ? t('jira.active') : t(`jira.${conn.status}`)}
+              </span>
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );

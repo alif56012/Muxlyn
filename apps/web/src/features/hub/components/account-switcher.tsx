@@ -26,7 +26,7 @@ export function AccountSwitcher({ connections }: Props) {
           {active?.avatar_url && (
             <img src={active.avatar_url} alt="" className="h-5 w-5 rounded-full" />
           )}
-          <span>{active ? active.display_name : t('jira.no_account')}</span>
+          <span>{active ? active.email || active.display_name : t('jira.no_account')}</span>
           <ChevronDown size={14} className="opacity-50" />
         </Button>
       </DropdownMenuTrigger>
@@ -42,7 +42,7 @@ export function AccountSwitcher({ connections }: Props) {
               <img src={conn.avatar_url} alt="" className="h-5 w-5 rounded-full" />
             )}
             <div className="text-left">
-              <p className="font-medium text-sm">{conn.display_name}</p>
+              <p className="font-medium text-sm">{conn.email || conn.display_name}</p>
               <p className="text-xs text-muted-foreground">{conn.jira_url}</p>
             </div>
             {conn.is_active && (

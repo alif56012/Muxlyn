@@ -49,7 +49,7 @@ function ConnectDialog({
   const { t } = useTranslation();
   const createMutation = useCreateConnection();
   const [url, setUrl] = useState('');
-  const [displayName, setDisplayName] = useState('');
+  const [workEmail, setWorkEmail] = useState('');
   const [token, setToken] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -67,12 +67,12 @@ function ConnectDialog({
     try {
       await createMutation.mutateAsync({
         service_type: 'jira',
-        display_name: displayName.trim() || new URL(cleanUrl).hostname,
+        display_name: workEmail.trim() || new URL(cleanUrl).hostname,
         token: token.trim(),
         url: cleanUrl,
       });
       setUrl('');
-      setDisplayName('');
+      setWorkEmail('');
       setToken('');
       onOpenChange(false);
     } catch {
@@ -99,12 +99,12 @@ function ConnectDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="jira-name">{t('jira.display_name', 'Display name')}</Label>
+            <Label htmlFor="jira-name">{t('jira.work_email', 'Work email')}</Label>
             <Input
               id="jira-name"
-              placeholder={t('jira.name_placeholder', 'Optional — defaults to hostname')}
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder={t('jira.email_placeholder', 'you@company.com')}
+              value={workEmail}
+              onChange={(e) => setWorkEmail(e.target.value)}
             />
           </div>
           <div className="space-y-2">

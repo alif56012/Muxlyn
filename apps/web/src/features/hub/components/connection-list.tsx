@@ -56,8 +56,8 @@ export function ConnectionList({ connections }: Props) {
                 <img src={conn.avatar_url} alt="" className="h-8 w-8 rounded-full" />
               )}
               <div>
-                <p className="font-medium">{conn.display_name}</p>
-                <p className="text-sm text-muted-foreground">{conn.email}</p>
+                <p className="font-medium">{conn.email || conn.display_name}</p>
+                <p className="text-sm text-muted-foreground">{conn.display_name !== conn.email ? conn.display_name : ''}</p>
                 <p className="text-xs text-muted-foreground">{conn.jira_url}</p>
                 <span className={`text-xs font-medium ${STATUS_COLORS[conn.status] ?? ''}`}>
                   {t(STATUS_LABEL_KEYS[conn.status] ?? conn.status)}

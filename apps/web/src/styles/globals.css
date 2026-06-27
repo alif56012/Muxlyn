@@ -93,3 +93,238 @@
       "calt" 1;
   }
 }
+
+/* ===== FullCalendar v6 — shadcn/ui theme ===== */
+
+/*
+ * DOM structure (month view):
+ *   td.fc-daygrid-day.fc-day-today.fc-day-sat  ← day cell (td)
+ *     div.fc-daygrid-day-frame
+ *       div.fc-daygrid-day-top
+ *         a.fc-daygrid-day-number
+ *       div.fc-daygrid-day-events
+ *         div.fc-daygrid-event-harness
+ *           a.fc-daygrid-event.fc-h-event
+ *
+ * FC injects CSS via <style> in <head> AFTER our globals.css,
+ * so we need higher specificity or !important to win.
+ * Use ".fc-custom .fc .fc-daygrid-day" pattern for specificity.
+ */
+
+/* ── CSS Variables ── */
+.fc-custom {
+  --fc-border-color: hsl(var(--border));
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: hsl(var(--muted));
+  --fc-neutral-text-color: hsl(var(--muted-foreground));
+  --fc-today-bg-color: hsl(var(--primary) / 0.08);
+  --fc-event-bg-color: hsl(var(--primary));
+  --fc-event-border-color: transparent;
+  --fc-event-text-color: #fff;
+  --fc-more-link-text-color: hsl(var(--primary));
+  --fc-more-link-bg-color: transparent;
+  --fc-highlight-color: hsl(var(--primary) / 0.15);
+  --fc-list-event-hover-bg-color: hsl(var(--accent));
+  font-family: inherit;
+  font-size: 0.8125rem;
+}
+
+/* ── Borders ── */
+.fc-custom .fc-scrollgrid { border-color: hsl(var(--border)) !important; }
+.fc-custom .fc-scrollgrid td,
+.fc-custom .fc-scrollgrid th { border-color: hsl(var(--border)) !important; }
+.fc-custom .fc-scrollgrid-section-header > th { border: none !important; }
+
+/* ── Day-of-week header ── */
+.fc-custom .fc-col-header-cell {
+  background: transparent;
+  padding: 8px 0 6px;
+  border-bottom: 1.5px solid hsl(var(--border)) !important;
+}
+.fc-custom .fc-col-header-cell-cushion {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  text-decoration: none !important;
+  padding: 0;
+}
+
+/* ── Day cells — base ── */
+
+/* ── Day number ── */
+.fc-custom .fc-daygrid-day-number {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  text-decoration: none !important;
+  padding: 5px 7px;
+  line-height: 1;
+}
+/* "other month" days */
+.fc-custom .fc-day-other .fc-daygrid-day-top { opacity: 0.35; }
+
+/* ── Today ── (FC applies bg via --fc-today-bg-color on td.fc-daygrid-day.fc-day-today)
+   We override with a subtle ring instead */
+.fc-custom .fc .fc-daygrid-day.fc-day-today {
+  background-color: hsl(var(--primary) / 0.07) !important;
+  box-shadow: inset 0 0 0 1.5px hsl(var(--primary) / 0.3);
+}
+.fc-custom .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  color: hsl(var(--primary));
+  font-weight: 700;
+}
+
+/* ── Weekend ── */
+.fc-custom .fc .fc-daygrid-day.fc-day-sat,
+.fc-custom .fc .fc-daygrid-day.fc-day-sun {
+  background-color: hsl(var(--muted) / 0.5) !important;
+}
+
+/* ── 8h+ complete — green background on the td ── */
+.fc-custom .fc .fc-daygrid-day.fc-day-complete {
+  background-color: hsl(142 71% 45% / 0.12) !important;
+}
+.fc-custom .fc .fc-daygrid-day.fc-day-complete .fc-daygrid-day-number {
+  color: hsl(142 65% 30%);
+  font-weight: 700;
+}
+/* today + complete */
+.fc-custom .fc .fc-daygrid-day.fc-day-today.fc-day-complete {
+  background-color: hsl(142 71% 45% / 0.18) !important;
+  box-shadow: inset 0 0 0 1.5px hsl(142 71% 45% / 0.4);
+}
+
+/* ── <8h incomplete — orange background on the td ── */
+.fc-custom .fc .fc-daygrid-day.fc-day-incomplete {
+  background-color: hsl(38 92% 50% / 0.1) !important;
+}
+.fc-custom .fc .fc-daygrid-day.fc-day-incomplete .fc-daygrid-day-number {
+  color: hsl(38 80% 35%);
+  font-weight: 700;
+}
+/* today + incomplete */
+.fc-custom .fc .fc-daygrid-day.fc-day-today.fc-day-incomplete {
+  background-color: hsl(38 92% 50% / 0.16) !important;
+  box-shadow: inset 0 0 0 1.5px hsl(38 92% 50% / 0.4);
+}
+
+/* ── Events ── */
+.fc-custom .fc-daygrid-event,
+.fc-custom .fc-h-event {
+  border: none !important;
+  border-radius: 3px !important;
+  font-size: 0.6875rem !important;
+  line-height: 1.35;
+  padding: 1px 4px !important;
+  margin: 1px 1px 0 !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  opacity: 0.92;
+  transition: opacity 0.1s ease;
+}
+.fc-custom .fc-daygrid-event:hover,
+.fc-custom .fc-h-event:hover {
+  opacity: 1;
+}
+
+/* ── +N more link ── */
+.fc-custom .fc-daygrid-more-link {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: hsl(var(--primary));
+  padding: 1px 4px;
+}
+.fc-custom .fc-daygrid-more-link:hover {
+  background-color: hsl(var(--primary) / 0.1) !important;
+  border-radius: 3px;
+}
+
+/* ── More-events popover ── */
+.fc-custom .fc-more-popover {
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  background: hsl(var(--card)) !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12) !important;
+}
+.fc-custom .fc-more-popover .fc-popover-header {
+  background: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-radius: var(--radius) var(--radius) 0 0 !important;
+  padding: 8px 12px !important;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.fc-custom .fc-more-popover .fc-popover-close {
+  color: hsl(var(--muted-foreground));
+}
+.fc-custom .fc-more-popover .fc-popover-body { padding: 6px !important; }
+
+/* ── Time grid (week/day view) ── */
+.fc-custom .fc-timegrid-slot { height: 2.5rem; }
+.fc-custom .fc-timegrid-slot-label {
+  font-size: 0.6875rem;
+  color: hsl(var(--muted-foreground));
+  vertical-align: top;
+  padding-top: 2px;
+}
+.fc-custom .fc .fc-timegrid-col.fc-day-today {
+  background-color: hsl(var(--primary) / 0.05) !important;
+}
+.fc-custom .fc .fc-timegrid-col.fc-day-complete {
+  background-color: hsl(142 71% 45% / 0.1) !important;
+}
+.fc-custom .fc .fc-timegrid-col.fc-day-incomplete {
+  background-color: hsl(38 92% 50% / 0.08) !important;
+}
+.fc-custom .fc .fc-timegrid-col.fc-day-today.fc-day-complete {
+  background-color: hsl(142 71% 45% / 0.15) !important;
+}
+.fc-custom .fc .fc-timegrid-col.fc-day-today.fc-day-incomplete {
+  background-color: hsl(38 92% 50% / 0.13) !important;
+}
+.fc-custom .fc-timegrid-now-indicator-line {
+  border-color: hsl(var(--destructive)) !important;
+}
+.fc-custom .fc-timegrid-now-indicator-arrow {
+  border-top-color: hsl(var(--destructive)) !important;
+  border-bottom-color: hsl(var(--destructive)) !important;
+}
+
+/* ── Dark mode ── */
+.dark .fc-custom .fc .fc-daygrid-day.fc-day-complete {
+  background-color: hsl(142 60% 45% / 0.16) !important;
+}
+.dark .fc-custom .fc .fc-daygrid-day.fc-day-complete .fc-daygrid-day-number {
+  color: hsl(142 60% 60%);
+}
+.dark .fc-custom .fc .fc-daygrid-day.fc-day-today.fc-day-complete {
+  background-color: hsl(142 60% 45% / 0.22) !important;
+  box-shadow: inset 0 0 0 1.5px hsl(142 60% 45% / 0.45);
+}
+.dark .fc-custom .fc .fc-daygrid-day.fc-day-incomplete {
+  background-color: hsl(38 82% 50% / 0.14) !important;
+}
+.dark .fc-custom .fc .fc-daygrid-day.fc-day-incomplete .fc-daygrid-day-number {
+  color: hsl(38 82% 60%);
+}
+.dark .fc-custom .fc .fc-daygrid-day.fc-day-today.fc-day-incomplete {
+  background-color: hsl(38 82% 50% / 0.2) !important;
+  box-shadow: inset 0 0 0 1.5px hsl(38 82% 50% / 0.45);
+}
+.dark .fc-custom .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  color: hsl(var(--primary));
+}
+.dark .fc-custom .fc .fc-timegrid-col.fc-day-complete {
+  background-color: hsl(142 60% 45% / 0.14) !important;
+}
+.dark .fc-custom .fc .fc-timegrid-col.fc-day-incomplete {
+  background-color: hsl(38 82% 50% / 0.12) !important;
+}
+.dark .fc-custom .fc .fc-timegrid-col.fc-day-today.fc-day-complete {
+  background-color: hsl(142 60% 45% / 0.2) !important;
+}
+.dark .fc-custom .fc .fc-timegrid-col.fc-day-today.fc-day-incomplete {
+  background-color: hsl(38 82% 50% / 0.18) !important;
+}
