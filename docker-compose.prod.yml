@@ -1,0 +1,40 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - '3000'
+    env_file:
+      - apps/api/.env.production
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - '80'
+    depends_on:
+      - api
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - '5433'
+    environment:
+      POSTGRES_USER: muxlyn
+      POSTGRES_PASSWORD: muxlyn
+      POSTGRES_DB: muxlyn
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U muxlyn']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata_prod:
