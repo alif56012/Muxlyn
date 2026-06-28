@@ -218,36 +218,37 @@ export function CalendarCreateDialog({
           </div>
         ) : (
           <>
-            <div className="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
+            <div className="px-6 py-5 space-y-6 max-h-[60vh] overflow-y-auto">
               {/* Issue Input & Search */}
               <div className="space-y-1.5">
                 <Label htmlFor="issue-key" className="text-xs text-muted-foreground">
                   {t('plugin.jiraWorklog.name')} ({t('worklog.search_button')} / Key)
                 </Label>
                 <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="issue-key"
-                      placeholder={t('worklog.search_placeholder_dialog')}
-                      value={searchText}
-                      onChange={(e) => {
-                        setSearchText(e.target.value);
-                        setSelectedIssue(null);
-                      }}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                      className="pl-8 h-9 text-sm"
-                    />
-                  </div>
+                  <Input
+                    id="issue-key"
+                    placeholder={t('worklog.search_placeholder_dialog')}
+                    value={searchText}
+                    onChange={(e) => {
+                      setSearchText(e.target.value);
+                      setSelectedIssue(null);
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    className="h-9 text-sm flex-1"
+                  />
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
+                    size="icon-sm"
                     onClick={handleSearch}
                     disabled={isLoading || !searchText.trim()}
+                    className="h-9 w-9 shrink-0"
                   >
-                    {searchMutation.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-                    {t('worklog.search_button')}
+                    {searchMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
                 {selectedIssue && (

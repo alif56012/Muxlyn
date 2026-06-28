@@ -11,7 +11,7 @@ import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import thLocale from '@fullcalendar/core/locales/th';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/components/ui/button';
 
@@ -44,6 +44,7 @@ interface FullCalendarWrapperProps {
   onDateSelect: (date: string) => void;
   onEventDrop: (worklogId: string, newDate: string, newHours?: number) => void;
   onDatesSet?: (dateFrom: string, dateTo: string) => void;
+  onDatesIntervalChange?: (start: Date, end: Date) => void;
   dayCellClasses?: (date: string) => string[];
 }
 
@@ -68,6 +69,7 @@ export function FullCalendarWrapper({
   onDateSelect,
   onEventDrop,
   onDatesSet,
+  onDatesIntervalChange,
   dayCellClasses,
 }: FullCalendarWrapperProps) {
   const { t, i18n } = useTranslation();
@@ -215,6 +217,9 @@ export function FullCalendarWrapper({
             const api = arg.view.calendar;
             const date = api.getDate();
             const viewType = arg.view.type;
+
+            onDatesIntervalChange?.(arg.view.currentStart, arg.view.currentEnd);
+
             if (viewType === 'dayGridMonth') {
               setTitle(date.toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' }));
             } else if (viewType === 'timeGridWeek') {

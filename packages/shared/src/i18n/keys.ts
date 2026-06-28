@@ -27,6 +27,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'common.month': 'Month',
     'common.week': 'Week',
     'common.day': 'Day',
+    'common.logged_vs_target': 'Logged: {{logged}}h / Target: {{target}}h ({{days}} days x 8h)',
 
     'login.welcome': 'Welcome back',
     'login.create_account': 'Create an account',
@@ -219,6 +220,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'worklog.deleting': 'Deleting...',
     'worklog.saving': 'Saving...',
     'worklog.save_changes': 'Save changes',
+    'calendar.logged_hours': 'Logged Hours',
+    'calendar.target_hours': 'Target Hours',
+    'calendar.working_days': 'Working Days',
+    'calendar.days_count_one': '{{count}} day',
+    'calendar.days_count_other': '{{count}} days',
 
     'jira.not_connected_banner': 'No Jira account connected',
     'jira.not_connected_banner_desc': 'Connect a Jira account from Settings to start logging work.',
@@ -373,6 +379,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'common.month': 'เดือน',
     'common.week': 'สัปดาห์',
     'common.day': 'วัน',
+    'common.logged_vs_target': 'บันทึกแล้ว: {{logged}} ชม. / เป้าหมาย: {{target}} ชม. ({{days}} วัน x 8 ชม.)',
 
     'login.welcome': 'ยินดีต้อนรับ',
     'login.create_account': 'สร้างบัญชี',
@@ -565,6 +572,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'worklog.deleting': 'กำลังลบ...',
     'worklog.saving': 'กำลังบันทึก...',
     'worklog.save_changes': 'บันทึกการเปลี่ยนแปลง',
+    'calendar.logged_hours': 'ชั่วโมงงานที่บันทึก',
+    'calendar.target_hours': 'เป้าหมายชั่วโมงงาน',
+    'calendar.working_days': 'วันทำงาน',
+    'calendar.days_count_one': '{{count}} วัน',
+    'calendar.days_count_other': '{{count}} วัน',
 
     'jira.not_connected_banner': 'ยังไม่ได้เชื่อมต่อบัญชี Jira',
     'jira.not_connected_banner_desc': 'เชื่อมต่อบัญชี Jira จากหนัาตั้งค่าเพื่อเริ่มบันทึกงาน',

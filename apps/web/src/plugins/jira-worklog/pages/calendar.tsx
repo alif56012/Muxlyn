@@ -36,6 +36,7 @@ export default function CalendarPage() {
   const [tab, setTab] = useState('calendar');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [calendarRange, setCalendarRange] = useState<{ from: string; to: string } | null>(null);
+  const [viewInterval, setViewInterval] = useState<{ start: Date; end: Date } | null>(null);
 
   // edit dialog state
   const [editing, setEditing] = useState<{ worklogId: string; issueId: string } | null>(null);
@@ -51,6 +52,46 @@ export default function CalendarPage() {
   );
 
   const updateMutation = useUpdateWorklog();
+
+  const { totalLoggedHours, targetHours, workingDays } = useMemo(() => {
+    if (!viewInterval) return { totalLoggedHours: 0, targetHours: 0, workingDays: 0 };
+
+    let logged = 0;
+    for (const wl of worklogItems) {
+      if (!wl.started || !wl.hours) continue;
+      const eventDate = new Date(wl.started);
+      if (eventDate >= viewInterval.start && eventDate < viewInterval.end) {
+        logged += wl.hours;
+      }
+    }
+
+    let days = 0;
+    const cur = new Date(viewInterval.start);
+    while (cur < viewInterval.end) {
+      const d = cur.getDay();
+      if (d !== 0 && d !== 6) {
+        days++;
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    return {
+      totalLoggedHours: parseFloat(logged.toFixed(1)),
+      targetHours: days * 8,
+      workingDays: days,
+    };
+  }, [worklogItems, viewInterval]);
+
+  const handleDatesIntervalChange = useCallback((start: Date, end: Date) => {
+    const startMs = start.getTime();
+    const endMs = end.getTime();
+    setViewInterval((prev) => {
+      if (prev && prev.start.getTime() === startMs && prev.end.getTime() === endMs) {
+        return prev;
+      }
+      return { start, end };
+    });
+  }, []);
 
   // context menu
   const [contextMenu, setContextMenu] = useState<{
@@ -268,7 +309,55 @@ export default function CalendarPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="calendar">
+        <TabsContent value="calendar" className="space-y-6 outline-none">
+          {viewInterval && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 shadow-sm relative overflow-hidden">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      {t('calendar.logged_hours')}
+                    </p>
+                    <h3 className="text-2xl font-bold mt-1 text-primary">
+                      {totalLoggedHours}h
+                    </h3>
+                  </div>
+                  <Clock className="h-8 w-8 text-primary/30" />
+                </CardContent>
+              </Card>
+
+              <Card className="bg-muted/40 shadow-sm">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      {t('calendar.target_hours')}
+                    </p>
+                    <h3 className="text-2xl font-bold mt-1">
+                      {targetHours}h
+                    </h3>
+                  </div>
+                  <CalendarIcon className="h-8 w-8 text-muted-foreground/30" />
+                </CardContent>
+              </Card>
+
+              <Card className="bg-muted/40 shadow-sm">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      {t('calendar.working_days')}
+                    </p>
+                    <h3 className="text-2xl font-bold mt-1">
+                      {t('calendar.days_count', { count: workingDays })}
+                    </h3>
+                  </div>
+                  <span className="text-2xl font-extrabold text-muted-foreground/15 font-mono select-none">
+                    {workingDays}x8
+                  </span>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           <Card>
             <CardContent className="pt-6">
               <FullCalendarWrapper
@@ -278,6 +367,7 @@ export default function CalendarPage() {
                 onDateSelect={handleDateSelect}
                 onEventDrop={handleEventDrop}
                 onDatesSet={handleDatesSet}
+                onDatesIntervalChange={handleDatesIntervalChange}
                 dayCellClasses={dayCellClasses}
               />
             </CardContent>

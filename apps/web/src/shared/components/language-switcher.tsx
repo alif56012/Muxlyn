@@ -9,8 +9,8 @@ import {
 } from '@/shared/components/ui/dropdown-menu';
 
 const LOCALES = [
-  { code: 'en', label: 'EN', flag: '🇺🇸' },
-  { code: 'th', label: 'TH', flag: '🇹🇭' },
+  { code: 'en', label: 'EN' },
+  { code: 'th', label: 'TH' },
 ] as const;
 
 export function LanguageSwitcher() {
@@ -26,7 +26,6 @@ export function LanguageSwitcher() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-1 px-2">
-          <span>{currentLocale.flag}</span>
           <span className="text-xs font-medium">{currentLocale.label}</span>
           <ChevronDown size={12} className="opacity-50" />
         </Button>
@@ -37,12 +36,11 @@ export function LanguageSwitcher() {
             key={locale.code}
             onClick={() => handleChange(locale.code)}
             disabled={locale.code === i18n.language}
-            className="gap-2"
+            className="gap-2 text-xs font-medium justify-between"
           >
-            <span>{locale.flag}</span>
             <span>{locale.label}</span>
             {locale.code === i18n.language && (
-              <span className="ml-auto text-xs text-primary">✓</span>
+              <span className="text-primary font-semibold">✓</span>
             )}
           </DropdownMenuItem>
         ))}

@@ -23,8 +23,8 @@ import {
 import { useTheme } from '@/shared/stores/theme';
 
 const LOCALES = [
-  { code: 'en', label: 'EN', flag: '🇺🇸' },
-  { code: 'th', label: 'TH', flag: '🇹🇭' },
+  { code: 'en', label: 'EN' },
+  { code: 'th', label: 'TH' },
 ] as const;
 
 interface HeaderProps {
@@ -75,29 +75,27 @@ export function Header({ onMenuToggle, sidebarCollapsed, onSidebarToggle }: Head
         )}
       </Button>
 
-      <div className="flex-1" />
-
       <AccountSwitcher />
+
+      <div className="flex-1" />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon-md" className="gap-1 px-2 w-auto">
-            <span className="text-sm">{currentLocale.flag}</span>
-            <span className="hidden sm:inline text-xs font-medium">{currentLocale.label}</span>
+            <span className="text-xs font-semibold">{currentLocale.label}</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-[100px]">
+        <DropdownMenuContent align="end" className="min-w-[80px]">
           {LOCALES.map((locale) => (
             <DropdownMenuItem
               key={locale.code}
               onClick={() => handleLangChange(locale.code)}
               disabled={locale.code === i18n.language}
-              className="gap-2"
+              className="gap-2 text-xs font-medium justify-between"
             >
-              <span>{locale.flag}</span>
               <span>{locale.label}</span>
               {locale.code === i18n.language && (
-                <span className="ml-auto text-xs text-primary">✓</span>
+                <span className="text-primary font-semibold">✓</span>
               )}
             </DropdownMenuItem>
           ))}

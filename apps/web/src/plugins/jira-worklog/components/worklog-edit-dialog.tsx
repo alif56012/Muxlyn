@@ -142,7 +142,7 @@ export function WorklogEditDialog({
             <div className="h-16 w-full rounded-md bg-muted animate-pulse" />
           </div>
         ) : worklog ? (
-          <div className="px-6 py-5 space-y-5">
+          <div className="px-6 py-5 space-y-6">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5" />
