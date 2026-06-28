@@ -164,6 +164,9 @@
 }
 /* "other month" days */
 .fc-custom .fc-day-other .fc-daygrid-day-top { opacity: 0.35; }
+.fc-custom .fc .fc-daygrid-day.fc-day-other {
+  background-color: hsl(var(--muted) / 0.3) !important;
+}
 
 /* ── Today ── (FC applies bg via --fc-today-bg-color on td.fc-daygrid-day.fc-day-today)
    We override with a subtle ring instead */

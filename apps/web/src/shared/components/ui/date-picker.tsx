@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, parse, isValid } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { Button } from './button';
 import { Calendar } from './calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { Input } from './input';
 
 interface DatePickerProps {
   value?: string;
@@ -40,7 +41,30 @@ export function DatePicker({
   endMonth,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState(value || '');
   const selected = parseDate(value);
+
+  useEffect(() => {
+    setInputValue(value || '');
+  }, [value]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+
+    // Try to parse the input
+    const parsed = parse(newValue, 'yyyy-MM-dd', new Date());
+    if (isValid(parsed)) {
+      onChange?.(formatDate(parsed));
+    }
+  };
+
+  const handleBlur = () => {
+    // Reset to current value if input is invalid
+    if (inputValue !== (value || '')) {
+      setInputValue(value || '');
+    }
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -57,20 +81,30 @@ export function DatePicker({
           {selected ? displayDate(selected) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-3" align="start">
         <Calendar
           mode="single"
           selected={selected}
           onSelect={(date) => {
             if (date) {
               onChange?.(formatDate(date));
+              setOpen(false);
             }
-            setOpen(false);
           }}
           disabled={disabled}
           startMonth={startMonth}
           endMonth={endMonth}
         />
+        <div className="mt-3 border-t pt-3">
+          <Input
+            type="text"
+            placeholder="yyyy-mm-dd"
+            value={inputValue}
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            className="h-8 text-sm"
+          />
+        </div>
       </PopoverContent>
     </Popover>
   );

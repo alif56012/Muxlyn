@@ -11,6 +11,34 @@ import {
 } from './jira-worklog-client';
 import { searchWorklogs, searchIssues } from './worklog-search-service';
 
+function authHeader(connection: Awaited<ReturnType<typeof getActiveJiraConnection>>): string {
+  return `Basic ${btoa(`${connection.email}:${connection.apiToken}`)}`;
+}
+
+async function jiraGet(connection: Awaited<ReturnType<typeof getActiveJiraConnection>>, path: string): Promise<unknown> {
+  const url = `${connection.jiraUrl}${path}`;
+  const res = await fetch(url, {
+    headers: { Authorization: authHeader(connection), Accept: 'application/json' },
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (res.status === 401) throw new JiraInvalidTokenError();
+  if (!res.ok) throw new Error(`Jira ${res.status}`);
+  return res.json();
+}
+
+async function jiraPost(connection: Awaited<ReturnType<typeof getActiveJiraConnection>>, path: string, body: unknown): Promise<unknown> {
+  const url = `${connection.jiraUrl}${path}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: authHeader(connection), Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (res.status === 401) throw new JiraInvalidTokenError();
+  if (!res.ok) throw new Error(`Jira ${res.status}`);
+  return res.json();
+}
+
 export const worklogRoutes = new Elysia({ prefix: '/api' })
   .use(authMiddleware)
 
@@ -252,7 +280,6 @@ export const worklogRoutes = new Elysia({ prefix: '/api' })
       );
 
       set.status = 204;
-      return null;
     },
     {
       detail: {
@@ -367,6 +394,172 @@ export const worklogRoutes = new Elysia({ prefix: '/api' })
         }),
       },
     },
-  );
+  )
 
+  // List accessible boards
+  .get(
+    '/worklog/boards',
+    async ({ user }) => {
+      const connection = await getActiveJiraConnection(user.id);
+
+      // Use same approach as MWP: maxResults=100, fetch all pages in parallel
+      const fetchPage = async (startAt: number) => {
+        const data = (await jiraGet(
+          connection,
+          `/rest/agile/1.0/board?startAt=${startAt}&maxResults=100`,
+        )) as {
+          values: { id: number; name: string; location?: { projectKey?: string } }[];
+          total?: number;
+        };
+        return { values: data.values ?? [], total: data.total ?? 0 };
+      };
+
+      const first = await fetchPage(0);
+      const all: { id: string; name: string; projectKey?: string }[] = first.values.map((b) => ({
+        id: String(b.id),
+        name: b.name,
+        projectKey: b.location?.projectKey,
+      }));
+
+      const total = first.total;
+      const perPage = first.values.length || 100;
+
+      if (total > 0 && all.length < total) {
+        const pages = [];
+        for (let i = perPage; i < total; i += perPage) {
+          pages.push(i);
+        }
+        const results = await Promise.all(pages.map((s) => fetchPage(s)));
+        for (const page of results) {
+          for (const b of page.values) {
+            all.push({ id: String(b.id), name: b.name, projectKey: b.location?.projectKey });
+          }
+        }
+      }
+
+      return { success: true, message: 'ok', data: { boards: all } };
+    },
+    {
+      detail: {
+        tags: ['Worklogs'],
+        summary: 'List accessible boards',
+        description: 'Returns all Jira boards the user can access, for autocomplete in report filters.',
+      },
+      response: {
+        200: t.Object({
+          success: t.Boolean(),
+          message: t.String(),
+          data: t.Object({
+            boards: t.Array(
+              t.Object({ id: t.String(), name: t.String(), projectKey: t.Optional(t.String()) }),
+            ),
+          }),
+        }),
+      },
+    },
+  )
+
+  // List accessible projects
+  .get(
+    '/worklog/projects',
+    async ({ user }) => {
+      const connection = await getActiveJiraConnection(user.id);
+
+      const fetchPage = async (startAt: number) => {
+        const data = (await jiraGet(
+          connection,
+          `/rest/api/3/project/search?startAt=${startAt}&maxResults=100`,
+        )) as {
+          values: { key: string; name: string }[];
+          total?: number;
+        };
+        return { values: data.values ?? [], total: data.total ?? 0 };
+      };
+
+      const first = await fetchPage(0);
+      const all: { key: string; name: string }[] = first.values.map((p) => ({
+        key: p.key,
+        name: p.name,
+      }));
+
+      const total = first.total;
+      const perPage = first.values.length || 100;
+
+      if (total > 0 && all.length < total) {
+        const pages = [];
+        for (let i = perPage; i < total; i += perPage) {
+          pages.push(i);
+        }
+        const results = await Promise.all(pages.map((s) => fetchPage(s)));
+        for (const page of results) {
+          for (const p of page.values) {
+            all.push({ key: p.key, name: p.name });
+          }
+        }
+      }
+
+      return { success: true, message: 'ok', data: { projects: all } };
+    },
+    {
+      detail: {
+        tags: ['Worklogs'],
+        summary: 'List accessible projects',
+        description: 'Returns all Jira projects the user can access, for autocomplete in report filters.',
+      },
+      response: {
+        200: t.Object({
+          success: t.Boolean(),
+          message: t.String(),
+          data: t.Object({
+            projects: t.Array(
+              t.Object({ key: t.String(), name: t.String() }),
+            ),
+          }),
+        }),
+      },
+    },
+  )
+
+  // Search epics
+  .post(
+    '/worklog/epics/search',
+    async ({ user, body }) => {
+      const connection = await getActiveJiraConnection(user.id);
+      const q = (body.q ?? '').trim();
+      const jql = q
+        ? `issuetype = Epic AND (summary ~ "${q.replace(/"/g, '\\"')}" OR key ~ "${q.replace(/"/g, '\\"')}")`
+        : 'issuetype = Epic ORDER BY updated DESC';
+      const data = (await jiraPost(connection, '/rest/api/3/search/jql', {
+        jql,
+        fields: ['summary'],
+        maxResults: 25,
+      })) as { issues: { key: string; fields: { summary: string } }[] };
+      const epics = (data.issues ?? []).map((i) => ({
+        key: i.key,
+        summary: i.fields?.summary ?? i.key,
+      }));
+      return { success: true, message: 'ok', data: { epics } };
+    },
+    {
+      detail: {
+        tags: ['Worklogs'],
+        summary: 'Search epics',
+        description: 'Searches Jira epics by key or summary, for autocomplete in report filters.',
+      },
+      body: t.Object({
+        q: t.Optional(t.String()),
+      }),
+      response: {
+        200: t.Object({
+          success: t.Boolean(),
+          message: t.String(),
+          data: t.Object({
+            epics: t.Array(
+              t.Object({ key: t.String(), summary: t.String() }),
+            ),
+          }),
+        }),
+      },
+    },
+  );
 

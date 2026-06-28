@@ -33,6 +33,10 @@ async function request<T>(url: string, options?: RequestInit): Promise<ApiRespon
       );
     }
 
+    if (response.status === 204) {
+      return { success: true, message: '' } as any;
+    }
+
     const body = await response.json().catch(() => null);
 
     if (response.status === 401 && body) {

@@ -9,7 +9,7 @@ import { serviceConnectionsRoutes } from './modules/service-connections';
 import { serviceAdvancedRoutes } from './modules/service-connections/service-advanced-routes';
 import { serviceGroupsRoutes } from './modules/service-groups/service-groups-routes';
 import { workflowRoutes } from './modules/workflows/workflow-routes';
-import { bulkWorklogRoutes, worklogRoutes } from './modules/worklog';
+import { bulkWorklogRoutes, reportRoutes, worklogRoutes } from './modules/worklog';
 import { authHandler } from './shared/auth/handler';
 import { AuthOpenAPI } from './shared/auth/openapi';
 import { errorMiddleware } from './shared/errors/middleware';
@@ -42,6 +42,7 @@ export const app = new Elysia()
           { name: 'Service Groups', description: 'Service group management' },
           { name: 'Workflows', description: 'Workflow engine — design, run, and monitor workflows' },
           { name: 'Worklogs', description: 'Jira worklog management — bulk create, edit, and delete' },
+          { name: 'Reports', description: 'Epic & monthly worklog reports with CSV export' },
           { name: 'Health', description: 'Health check' },
         ],
         paths: betterAuthPaths,
@@ -60,6 +61,7 @@ export const app = new Elysia()
   .use(serviceGroupsRoutes)
   .use(workflowRoutes)
   .use(bulkWorklogRoutes)
+  .use(reportRoutes)
   .use(worklogRoutes)
   .use(healthModule)
   .all('*', ({ set }) => {

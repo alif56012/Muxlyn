@@ -1,22 +1,22 @@
 import { Link } from '@tanstack/react-router';
-import { CalendarIcon, History, Clock, Pencil, Trash2 } from 'lucide-react';
+import { CalendarIcon, Clock, Pencil, Trash2, BarChart3, Copy, Loader2 } from 'lucide-react';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { useServiceConnections } from '@/shared/api/service-connections';
 import type { CalendarEvent } from '@/plugins/jira-worklog/components/calendar/full-calendar';
 import { FullCalendarWrapper } from '@/plugins/jira-worklog/components/calendar/full-calendar';
-import { HistoryTab } from '@/plugins/jira-worklog/components/history-tab';
-import { LogWorkTab } from '@/plugins/jira-worklog/components/log-work-tab';
+import { ReportsPage } from '@/plugins/jira-worklog/pages/reports';
 import { CalendarCreateDialog } from '@/plugins/jira-worklog/components/calendar-create-dialog';
 import { WorklogEditDialog } from '@/plugins/jira-worklog/components/worklog-edit-dialog';
 import { WorklogDeleteDialog } from '@/plugins/jira-worklog/components/worklog-delete-dialog';
 import { useUpdateWorklog } from '@/plugins/jira-worklog/api/worklog';
 import { useWorklogsByDateRange } from '@/plugins/jira-worklog/api/search';
+import { useBulkCreateWorklogs } from '@/plugins/jira-worklog/api/bulk-worklog';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
-import { formatHours } from '@/shared/lib/utils';
+import { cn, formatHours } from '@/shared/lib/utils';
 
 const EVENT_COLORS = [
   '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b',
@@ -29,6 +29,24 @@ function colorForKey(key: string): string {
   return EVENT_COLORS[Math.abs(hash) % EVENT_COLORS.length];
 }
 
+function formatJiraDateTime(dateStr: string): string {
+  const cleanDateStr = dateStr.includes('T') ? dateStr : `${dateStr}T09:00:00`;
+  const date = new Date(cleanDateStr);
+  const yyyy = date.getFullYear();
+  const MM = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const HH = String(date.getHours()).padStart(2, '0');
+  const mm = String(date.getMinutes()).padStart(2, '0');
+  const ss = String(date.getSeconds()).padStart(2, '0');
+  const SSS = String(date.getMilliseconds()).padStart(3, '0');
+  const offsetMinutes = date.getTimezoneOffset();
+  const offsetSign = offsetMinutes <= 0 ? '+' : '-';
+  const absOffsetMinutes = Math.abs(offsetMinutes);
+  const offsetHours = String(Math.floor(absOffsetMinutes / 60)).padStart(2, '0');
+  const offsetMins = String(absOffsetMinutes % 60).padStart(2, '0');
+  return `${yyyy}-${MM}-${dd}T${HH}:${mm}:${ss}.${SSS}${offsetSign}${offsetHours}${offsetMins}`;
+}
+
 const EIGHT_HOURS_SECONDS = 28_800;
 
 export default function CalendarPage() {
@@ -39,7 +57,6 @@ export default function CalendarPage() {
   const [calendarRange, setCalendarRange] = useState<{ from: string; to: string } | null>(null);
   const [viewInterval, setViewInterval] = useState<{ start: Date; end: Date } | null>(null);
 
-  // edit dialog state
   const [editing, setEditing] = useState<{ worklogId: string; issueId: string } | null>(null);
   const [deleting, setDeleting] = useState<{ worklogId: string; issueId: string } | null>(null);
 
@@ -55,6 +72,7 @@ export default function CalendarPage() {
   const worklogItems = hasActiveConnection ? rawWorklogItems : [];
 
   const updateMutation = useUpdateWorklog();
+  const bulkCreateMutation = useBulkCreateWorklogs();
 
   const { totalLoggedHours, targetHours, workingDays } = useMemo(() => {
     if (!viewInterval) return { totalLoggedHours: 0, targetHours: 0, workingDays: 0 };
@@ -229,6 +247,57 @@ export default function CalendarPage() {
     }
   }, [contextMenu]);
 
+  const handleContextDuplicate = useCallback(() => {
+    if (contextMenu) {
+      const e = contextMenu.event;
+      const eventDate = e.start.slice(0, 10);
+      const durationSeconds = Math.round(e.extendedProps.hours * 3600);
+      const started = formatJiraDateTime(e.start);
+
+      bulkCreateMutation.mutate([{
+        issueId: e.extendedProps.issueId,
+        date: eventDate,
+        durationSeconds,
+        comment: e.extendedProps.comment,
+        started,
+      }], {
+        onSuccess: (res) => {
+          if (res.success && res.data) {
+            if (res.data.succeeded > 0) {
+              window.dispatchEvent(
+                new CustomEvent('toast:show', {
+                  detail: { message: 'Worklog duplicated successfully', variant: 'success' },
+                }),
+              );
+              invalidateCalendar();
+            } else {
+              const err = res.data.results[0]?.error ?? 'Unknown error';
+              window.dispatchEvent(
+                new CustomEvent('toast:show', {
+                  detail: { message: `Failed to duplicate: ${err}`, variant: 'error' },
+                }),
+              );
+            }
+          } else {
+            window.dispatchEvent(
+              new CustomEvent('toast:show', {
+                detail: { message: res.message || 'Failed to duplicate', variant: 'error' },
+              }),
+            );
+          }
+        },
+        onError: (err) => {
+          window.dispatchEvent(
+            new CustomEvent('toast:show', {
+              detail: { message: err instanceof Error ? err.message : 'Network error', variant: 'error' },
+            }),
+          );
+        }
+      });
+      setContextMenu(null);
+    }
+  }, [contextMenu, bulkCreateMutation, invalidateCalendar]);
+
   const handleContextDelete = useCallback(() => {
     if (contextMenu) {
       const e = contextMenu.event;
@@ -302,30 +371,40 @@ export default function CalendarPage() {
             <CalendarIcon className="h-4 w-4" />
             Calendar
           </TabsTrigger>
-          <TabsTrigger value="log-work" className="gap-1.5">
-            <Clock className="h-4 w-4" />
-            Log Work
-          </TabsTrigger>
-          <TabsTrigger value="history" className="gap-1.5">
-            <History className="h-4 w-4" />
-            History
+          <TabsTrigger value="reports" className="gap-1.5">
+            <BarChart3 className="h-4 w-4" />
+            {t('report.title', 'Reports')}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="calendar" className="space-y-6 outline-none">
           {hasActiveConnection && viewInterval && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 shadow-sm relative overflow-hidden">
+              <Card className={cn(
+                "shadow-sm relative overflow-hidden",
+                totalLoggedHours < targetHours
+                  ? "bg-gradient-to-br from-destructive/5 to-destructive/10 border-destructive/20"
+                  : "bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20"
+              )}>
                 <CardContent className="p-4 flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    <p className={cn(
+                      "text-xs font-semibold uppercase tracking-wider",
+                      totalLoggedHours < targetHours ? "text-destructive/80" : "text-muted-foreground"
+                    )}>
                       {t('calendar.logged_hours')}
                     </p>
-                    <h3 className="text-2xl font-bold mt-1 text-primary">
+                    <h3 className={cn(
+                      "text-2xl font-bold mt-1",
+                      totalLoggedHours < targetHours ? "text-destructive" : "text-primary"
+                    )}>
                       {formatHours(totalLoggedHours)}
                     </h3>
                   </div>
-                  <Clock className="h-8 w-8 text-primary/30" />
+                  <Clock className={cn(
+                    "h-8 w-8",
+                    totalLoggedHours < targetHours ? "text-destructive/30" : "text-primary/30"
+                  )} />
                 </CardContent>
               </Card>
 
@@ -362,7 +441,13 @@ export default function CalendarPage() {
           )}
 
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-6 relative">
+              {bulkCreateMutation.isPending && (
+                <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-50 flex flex-col items-center justify-center gap-2 rounded-md">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm font-medium text-muted-foreground">Duplicating worklog...</p>
+                </div>
+              )}
               <FullCalendarWrapper
                 events={calendarEvents}
                 onEventClick={handleEventClick}
@@ -372,18 +457,14 @@ export default function CalendarPage() {
                 onDatesSet={handleDatesSet}
                 onDatesIntervalChange={handleDatesIntervalChange}
                 dayCellClasses={dayCellClasses}
-                disabled={!hasActiveConnection}
+                disabled={!hasActiveConnection || bulkCreateMutation.isPending}
               />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="log-work">
-          <LogWorkTab onWorklogCreated={handleWorklogCreated} />
-        </TabsContent>
-
-        <TabsContent value="history">
-          <HistoryTab />
+        <TabsContent value="reports">
+          <ReportsPage />
         </TabsContent>
       </Tabs>
 
@@ -450,6 +531,13 @@ export default function CalendarPage() {
           >
             <Pencil className="h-4 w-4" />
             Edit
+          </button>
+          <button
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+            onClick={handleContextDuplicate}
+          >
+            <Copy className="h-4 w-4" />
+            Duplicate
           </button>
           <button
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive hover:bg-accent"

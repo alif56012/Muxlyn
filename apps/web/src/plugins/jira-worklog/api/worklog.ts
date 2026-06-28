@@ -88,7 +88,8 @@ export function useDeleteWorklog() {
         `/api/worklogs/${worklogId}?issueId=${encodeURIComponent(issueId)}`,
       ),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['worklogs'], exact: false });
+      qc.invalidateQueries({ queryKey: ['worklogs', 'calendar'], exact: false });
+      qc.invalidateQueries({ queryKey: ['worklogs', 'search'], exact: false });
     },
   });
 }

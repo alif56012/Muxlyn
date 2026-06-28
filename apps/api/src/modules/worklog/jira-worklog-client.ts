@@ -209,9 +209,18 @@ async function jiraFetch(
     );
   }
   if (!response.ok) {
-    throw new JiraNetworkError(
-      `Jira returned status ${response.status} for ${path}.`,
-    );
+    let errMsg = `Jira returned status ${response.status} for ${path}.`;
+    try {
+      const errBody = await response.json();
+      if (errBody && Array.isArray(errBody.errorMessages) && errBody.errorMessages.length > 0) {
+        errMsg = errBody.errorMessages.join(', ');
+      } else if (errBody && errBody.errors && typeof errBody.errors === 'object') {
+        errMsg = Object.entries(errBody.errors).map(([k, v]) => `${k}: ${v}`).join(', ');
+      }
+    } catch {
+      // ignore
+    }
+    throw new JiraNetworkError(errMsg);
   }
 
   return response;

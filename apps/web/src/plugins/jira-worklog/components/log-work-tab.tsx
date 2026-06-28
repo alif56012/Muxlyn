@@ -1,5 +1,5 @@
 import { AlertTriangle, Clock, Filter, Loader2, Search } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
@@ -18,22 +18,59 @@ export function LogWorkTab({ onWorklogCreated }: LogWorkTabProps) {
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkTasks, setBulkTasks] = useState<IssueSearchItem[]>([]);
   const [searchFilters, setSearchFilters] = useState<WorklogSearchFilters | null>(null);
+  const [suggestQ, setSuggestQ] = useState<string | null>(null);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const { data: issueResult, isLoading } = useIssueSearch(searchFilters, !!searchFilters);
+  const { data: suggestResult, isLoading: suggestLoading } = useIssueSearch(
+    suggestQ ? { freeText: suggestQ } : null,
+    !!suggestQ,
+  );
   const createMutation = useCreateWorklog();
 
   const issues = issueResult?.items ?? [];
+  const suggestions = (suggestResult?.items ?? []).slice(0, 5);
 
   const [creating, setCreating] = useState<Record<string, boolean>>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const handleInputChange = useCallback((val: string) => {
+    setFreeText(val);
+    setShowResults(false);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (val.trim().length >= 2) {
+      debounceRef.current = setTimeout(() => {
+        setSuggestQ(val.trim());
+        setSuggestOpen(true);
+      }, 250);
+    } else {
+      setSuggestQ(null);
+      setSuggestOpen(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, []);
 
   const handleSearch = useCallback(() => {
     if (!freeText.trim()) return;
     setShowResults(true);
     setBulkMode(false);
     setBulkTasks([]);
+    setSuggestOpen(false);
     setSearchFilters({ freeText: freeText.trim() });
   }, [freeText]);
+
+  const handleSuggestionClick = useCallback((issue: IssueSearchItem) => {
+    setFreeText(issue.key);
+    setSuggestOpen(false);
+    setShowResults(true);
+    setBulkMode(false);
+    setBulkTasks([]);
+    setSearchFilters({ freeText: issue.key });
+  }, []);
 
   const handleQuickLog = useCallback(
     (issue: IssueSearchItem) => {
@@ -113,10 +150,42 @@ export function LogWorkTab({ onWorklogCreated }: LogWorkTabProps) {
           <Input
             placeholder="Search by issue key or summary..."
             value={freeText}
-            onChange={(e) => setFreeText(e.target.value)}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onFocus={() => suggestions.length > 0 && setSuggestOpen(true)}
+            onBlur={() => setTimeout(() => setSuggestOpen(false), 200)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             className="pl-8"
           />
+
+          {/* Suggestion dropdown */}
+          {suggestOpen && suggestions.length > 0 && !showResults && (
+            <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-md border bg-popover shadow-md">
+              <div className="p-1">
+                {suggestions.map((issue) => (
+                  <button
+                    key={issue.id}
+                    type="button"
+                    onClick={() => handleSuggestionClick(issue)}
+                    className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                  >
+                    <span className="font-mono text-xs text-primary shrink-0">{issue.key}</span>
+                    <span className="truncate text-muted-foreground">{issue.summary}</span>
+                    {issue.isSubtask && (
+                      <span className="text-[10px] text-destructive shrink-0 ml-auto">sub-task</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {suggestOpen && suggestLoading && (
+            <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-md border bg-popover shadow-md">
+              <div className="flex items-center justify-center py-3">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            </div>
+          )}
         </div>
         <Button onClick={handleSearch} disabled={isLoading} size="sm">
           {isLoading && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}

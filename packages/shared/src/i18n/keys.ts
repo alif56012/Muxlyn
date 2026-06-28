@@ -168,6 +168,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.worklogHistory': 'History',
     'nav.settings': 'Settings',
 
+    'report.title': 'Reports',
+
     'plugin.jiraWorklog.name': 'Jira Worklog',
     'plugin.smartWorklog.name': 'Smart Worklog',
 
@@ -520,6 +522,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.worklog': 'บันทึกงาน',
     'nav.worklogHistory': 'ประวัติ',
     'nav.settings': 'ตั้งค่า',
+
+    'report.title': 'รายงาน',
 
     'plugin.jiraWorklog.name': 'บันทึกงาน Jira',
     'plugin.smartWorklog.name': 'บันทึกงานอัจฉริยะ',

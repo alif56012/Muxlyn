@@ -109,6 +109,9 @@ export function FullCalendarWrapper({
       const date = cell.dataset.date;
       if (!date) return;
       cell.classList.remove(...HIGHLIGHT_CLASSES);
+      if (cell.classList.contains('fc-day-other')) {
+        return;
+      }
       const classes = dayCellClasses?.(date) ?? [];
       if (classes.length > 0) cell.classList.add(...classes);
     });
