@@ -16,6 +16,7 @@ import { useWorklogsByDateRange } from '@/plugins/jira-worklog/api/search';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { formatHours } from '@/shared/lib/utils';
 
 const EVENT_COLORS = [
   '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b',
@@ -45,11 +46,13 @@ export default function CalendarPage() {
   const { data: connections = [], isLoading: connectionsLoading } = useServiceConnections('jira');
   const hasActiveConnection = connections.some((c) => c.isActive);
 
-  const { data: worklogItems = [] } = useWorklogsByDateRange(
+  const { data: rawWorklogItems = [] } = useWorklogsByDateRange(
     calendarRange?.from ?? '',
     calendarRange?.to ?? '',
     tab === 'calendar' && hasActiveConnection && !!calendarRange,
   );
+
+  const worklogItems = hasActiveConnection ? rawWorklogItems : [];
 
   const updateMutation = useUpdateWorklog();
 
@@ -115,7 +118,7 @@ export default function CalendarPage() {
         ).toISOString();
         return {
           id: wl.worklogId,
-          title: `${wl.issueKey}: ${wl.issueSummary} · ${wl.hours}h`,
+          title: `${wl.issueKey}: ${wl.issueSummary} · ${formatHours(wl.hours)}`,
           start,
           end,
           backgroundColor: colorForKey(wl.issueKey),
@@ -310,7 +313,7 @@ export default function CalendarPage() {
         </TabsList>
 
         <TabsContent value="calendar" className="space-y-6 outline-none">
-          {viewInterval && (
+          {hasActiveConnection && viewInterval && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 shadow-sm relative overflow-hidden">
                 <CardContent className="p-4 flex items-center justify-between">
@@ -319,7 +322,7 @@ export default function CalendarPage() {
                       {t('calendar.logged_hours')}
                     </p>
                     <h3 className="text-2xl font-bold mt-1 text-primary">
-                      {totalLoggedHours}h
+                      {formatHours(totalLoggedHours)}
                     </h3>
                   </div>
                   <Clock className="h-8 w-8 text-primary/30" />
@@ -333,7 +336,7 @@ export default function CalendarPage() {
                       {t('calendar.target_hours')}
                     </p>
                     <h3 className="text-2xl font-bold mt-1">
-                      {targetHours}h
+                      {formatHours(targetHours)}
                     </h3>
                   </div>
                   <CalendarIcon className="h-8 w-8 text-muted-foreground/30" />
@@ -369,6 +372,7 @@ export default function CalendarPage() {
                 onDatesSet={handleDatesSet}
                 onDatesIntervalChange={handleDatesIntervalChange}
                 dayCellClasses={dayCellClasses}
+                disabled={!hasActiveConnection}
               />
             </CardContent>
           </Card>
@@ -433,7 +437,7 @@ export default function CalendarPage() {
               {contextMenu.event.extendedProps.issueSummary}
             </div>
             <div className="truncate">
-              {contextMenu.event.extendedProps.issueKey} · {contextMenu.event.extendedProps.hours}h
+              {contextMenu.event.extendedProps.issueKey} · {formatHours(contextMenu.event.extendedProps.hours)}
             </div>
             {contextMenu.event.extendedProps.author && (
               <div className="truncate text-muted-foreground/60">{contextMenu.event.extendedProps.author}</div>

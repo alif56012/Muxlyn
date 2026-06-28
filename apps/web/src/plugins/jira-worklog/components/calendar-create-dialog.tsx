@@ -1,13 +1,11 @@
-import { useState, useCallback, useMemo } from 'react';
-import { Search, Loader2, CheckCircle2, XCircle, Calendar, Clock } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock, Loader2, Search, XCircle } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { DatePicker } from '@/shared/components/ui/date-picker';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
-import { Textarea } from '@/shared/components/ui/textarea';
-import { DatePicker } from '@/shared/components/ui/date-picker';
-import { TimePicker } from '@/shared/components/ui/time-picker';
-import { Checkbox } from '@/shared/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -15,16 +13,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/components/ui/modal';
-import { cn } from '@/shared/lib/utils';
+import { Textarea } from '@/shared/components/ui/textarea';
+import { TimePicker } from '@/shared/components/ui/time-picker';
+import { cn, formatHours } from '@/shared/lib/utils';
 import {
-  useIssueSearch,
-  type IssueSearchItem,
-} from '../api/search';
-import {
-  useBulkCreateWorklogs,
   type BulkCreateEntry,
   type BulkCreateResult,
+  useBulkCreateWorklogs,
 } from '../api/bulk-worklog';
+import { type IssueSearchItem, useIssueSearch, type WorklogSearchFilters } from '../api/search';
 
 interface CalendarCreateDialogProps {
   date: string;
@@ -50,13 +47,13 @@ function datesBetween(from: string, to: string): string[] {
 }
 
 function isWeekend(dateStr: string): boolean {
-  const d = new Date(dateStr + 'T00:00:00');
+  const d = new Date(`${dateStr}T00:00:00`);
   const day = d.getDay();
   return day === 0 || day === 6;
 }
 
 function formatDisplayDate(d: string, locale: string): string {
-  return new Date(d + 'T00:00:00').toLocaleDateString(locale, {
+  return new Date(`${d}T00:00:00`).toLocaleDateString(locale, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -82,10 +79,20 @@ export function CalendarCreateDialog({
   const [minutes, setMinutes] = useState(0);
   const [comment, setComment] = useState('');
   const [result, setResult] = useState<BulkCreateResult | null>(null);
+  const [searchFilters, setSearchFilters] = useState<WorklogSearchFilters | null>(null);
 
-  const searchMutation = useIssueSearch();
+  const { data: issueResult, isLoading: searchLoading } = useIssueSearch(
+    searchFilters,
+    !!searchFilters,
+  );
   const createMutation = useBulkCreateWorklogs();
-  const isLoading = searchMutation.isPending || createMutation.isPending;
+  const isLoading = searchLoading || createMutation.isPending;
+
+  useEffect(() => {
+    if (issueResult) {
+      setResults(issueResult.items);
+    }
+  }, [issueResult]);
 
   const dayCount = useMemo(() => {
     let days = datesBetween(dateFrom, dateTo);
@@ -95,22 +102,16 @@ export function CalendarCreateDialog({
     return Math.max(0, days.length);
   }, [dateFrom, dateTo, skipWeekends]);
 
-  const totalHours = useMemo(() => {
+  const totalHoursFormatted = useMemo(() => {
     const durationSeconds = hours * 3600 + minutes * 60;
-    return ((durationSeconds * dayCount) / 3600).toFixed(1);
+    const hoursNum = (durationSeconds * dayCount) / 3600;
+    return formatHours(hoursNum);
   }, [hours, minutes, dayCount]);
 
   const handleSearch = useCallback(() => {
     if (!searchText.trim()) return;
-    searchMutation.mutate(
-      { freeText: searchText.trim() },
-      {
-        onSuccess: (res) => {
-          if (res.data) setResults(res.data.items);
-        },
-      },
-    );
-  }, [searchText, searchMutation]);
+    setSearchFilters({ freeText: searchText.trim() });
+  }, [searchText]);
 
   const handleSubmit = useCallback(() => {
     const targetIssueId = selectedIssue ? selectedIssue.id : searchText.trim();
@@ -138,7 +139,20 @@ export function CalendarCreateDialog({
         }
       },
     });
-  }, [selectedIssue, searchText, dateFrom, dateTo, hours, minutes, comment, createMutation, onCreated, skipWeekends, startH, startM]);
+  }, [
+    selectedIssue,
+    searchText,
+    dateFrom,
+    dateTo,
+    hours,
+    minutes,
+    comment,
+    createMutation,
+    onCreated,
+    skipWeekends,
+    startH,
+    startM,
+  ]);
 
   const handleClose = () => {
     onOpenChange(false);
@@ -156,16 +170,14 @@ export function CalendarCreateDialog({
         setMinutes(0);
         setComment('');
         setResult(null);
-        searchMutation.reset();
+        setSearchFilters(null);
         createMutation.reset();
       }, 200);
     }
   };
 
   const errorText =
-    createMutation.data && !createMutation.data.success
-      ? createMutation.data.message
-      : null;
+    createMutation.data && !createMutation.data.success ? createMutation.data.message : null;
 
   const displayDate = formatDisplayDate(date, i18n.language);
 
@@ -183,10 +195,17 @@ export function CalendarCreateDialog({
               <CheckCircle2 className="h-5 w-5 text-green-600" />
               <span className="font-semibold text-sm">
                 {t('worklog.saved_success', { count: result.succeeded })}
-                {result.failed > 0 && <span className="text-destructive"> · {t('worklog.saved_failed', { count: result.failed })}</span>}
+                {result.failed > 0 && (
+                  <span className="text-destructive">
+                    {' '}
+                    · {t('worklog.saved_failed', { count: result.failed })}
+                  </span>
+                )}
               </span>
             </div>
-            <p className="text-sm text-muted-foreground">{t('worklog.total_hours', { hours: result.totalHours })}</p>
+            <p className="text-sm text-muted-foreground">
+              {t('worklog.total_hours', { hours: formatHours(result.totalHours) })}
+            </p>
             {result.results.length > 0 && (
               <div className="max-h-40 overflow-y-auto space-y-1 rounded-md border p-3">
                 {result.results.map((r, i) => (
@@ -206,7 +225,7 @@ export function CalendarCreateDialog({
                     )}
                     <span className="font-medium">{r.issueKey || r.issueId}</span>
                     {r.status === 'success' ? (
-                      <span className="text-muted-foreground">({r.hours}h)</span>
+                      <span className="text-muted-foreground">({formatHours(r.hours)})</span>
                     ) : (
                       <span className="text-destructive text-xs">{r.error}</span>
                     )}
@@ -214,7 +233,9 @@ export function CalendarCreateDialog({
                 ))}
               </div>
             )}
-            <Button variant="outline" onClick={handleClose} className="w-full">{t('common.close')}</Button>
+            <Button variant="outline" onClick={handleClose} className="w-full">
+              {t('common.close')}
+            </Button>
           </div>
         ) : (
           <>
@@ -244,7 +265,7 @@ export function CalendarCreateDialog({
                     disabled={isLoading || !searchText.trim()}
                     className="h-9 w-9 shrink-0"
                   >
-                    {searchMutation.isPending ? (
+                    {searchLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Search className="h-4 w-4" />
@@ -253,7 +274,9 @@ export function CalendarCreateDialog({
                 </div>
                 {selectedIssue && (
                   <div className="rounded-md border border-green-500/20 bg-green-50/50 dark:bg-green-950/10 p-2.5 mt-1.5 text-xs">
-                    <p className="font-mono font-medium text-green-700 dark:text-green-400">Selected: {selectedIssue.key}</p>
+                    <p className="font-mono font-medium text-green-700 dark:text-green-400">
+                      Selected: {selectedIssue.key}
+                    </p>
                     <p className="text-muted-foreground truncate">{selectedIssue.summary}</p>
                   </div>
                 )}
@@ -274,14 +297,18 @@ export function CalendarCreateDialog({
                         disabled={issue.isSubtask}
                         className={cn(
                           'w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors text-xs flex justify-between items-center',
-                          issue.isSubtask && 'opacity-50'
+                          issue.isSubtask && 'opacity-50',
                         )}
                       >
                         <div className="truncate pr-2">
                           <span className="font-mono font-medium">{issue.key}</span>
-                          <span className="ml-2 text-muted-foreground truncate">{issue.summary}</span>
+                          <span className="ml-2 text-muted-foreground truncate">
+                            {issue.summary}
+                          </span>
                         </div>
-                        {issue.isSubtask && <span className="text-[10px] text-destructive shrink-0">(sub-task)</span>}
+                        {issue.isSubtask && (
+                          <span className="text-[10px] text-destructive shrink-0">(sub-task)</span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -296,7 +323,9 @@ export function CalendarCreateDialog({
                 </Label>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <div className="flex-1 space-y-1">
-                    <Label className="text-[10px] text-muted-foreground">{t('worklog.start_date')}</Label>
+                    <Label className="text-[10px] text-muted-foreground">
+                      {t('worklog.start_date')}
+                    </Label>
                     <DatePicker
                       value={dateFrom}
                       onChange={(v) => {
@@ -308,7 +337,9 @@ export function CalendarCreateDialog({
                     />
                   </div>
                   <div className="flex-1 space-y-1">
-                    <Label className="text-[10px] text-muted-foreground">{t('worklog.end_date')}</Label>
+                    <Label className="text-[10px] text-muted-foreground">
+                      {t('worklog.end_date')}
+                    </Label>
                     <DatePicker
                       value={dateTo}
                       onChange={(v) => {
@@ -322,7 +353,9 @@ export function CalendarCreateDialog({
                 </div>
                 <div className="pt-1">
                   <div className="space-y-1">
-                    <Label className="text-[10px] text-muted-foreground">{t('worklog.start_time')}</Label>
+                    <Label className="text-[10px] text-muted-foreground">
+                      {t('worklog.start_time')}
+                    </Label>
                     <TimePicker
                       value={`${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}`}
                       onChange={(timeVal) => {
@@ -334,7 +367,9 @@ export function CalendarCreateDialog({
                   </div>
                 </div>
                 {dayCount > 1 && (
-                  <p className="text-[11px] text-muted-foreground">{t('worklog.entry', { count: dayCount })}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {t('worklog.entry', { count: dayCount })}
+                  </p>
                 )}
               </div>
 
@@ -352,10 +387,14 @@ export function CalendarCreateDialog({
                       max={24}
                       value={hours || ''}
                       placeholder="0"
-                      onChange={(e) => setHours(Math.max(0, Math.min(24, parseInt(e.target.value) || 0)))}
+                      onChange={(e) =>
+                        setHours(Math.max(0, Math.min(24, parseInt(e.target.value, 10) || 0)))
+                      }
                       className="h-9 text-center text-sm"
                     />
-                    <span className="text-sm text-muted-foreground font-medium">{t('worklog.hours')}</span>
+                    <span className="text-sm text-muted-foreground font-medium">
+                      {t('worklog.hours')}
+                    </span>
                   </div>
                   <div className="flex-1 flex items-center gap-1.5">
                     <Input
@@ -364,7 +403,9 @@ export function CalendarCreateDialog({
                       max={59}
                       value={minutes || ''}
                       placeholder="0"
-                      onChange={(e) => setMinutes(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
+                      onChange={(e) =>
+                        setMinutes(Math.min(59, Math.max(0, parseInt(e.target.value, 10) || 0)))
+                      }
                       className="h-9 text-center text-sm"
                     />
                     <span className="text-sm text-muted-foreground font-medium">m</span>
@@ -374,7 +415,9 @@ export function CalendarCreateDialog({
 
               {/* Comment */}
               <div className="space-y-1.5">
-                <Label htmlFor="create-comment" className="text-xs text-muted-foreground">{t('worklog.comment')}</Label>
+                <Label htmlFor="create-comment" className="text-xs text-muted-foreground">
+                  {t('worklog.comment')}
+                </Label>
                 <Textarea
                   id="create-comment"
                   value={comment}
@@ -408,7 +451,8 @@ export function CalendarCreateDialog({
 
             <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/30">
               <div className="text-sm text-muted-foreground">
-                {t('worklog.entry', { count: dayCount })} · {t('worklog.total_hours', { hours: totalHours })}
+                {t('worklog.entry', { count: dayCount })} ·{' '}
+                {t('worklog.total_hours', { hours: totalHoursFormatted })}
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={handleClose} disabled={isLoading}>
@@ -422,11 +466,12 @@ export function CalendarCreateDialog({
                     (hours === 0 && minutes === 0) ||
                     dayCount === 0 ||
                     !searchText.trim() ||
-                    (selectedIssue?.isSubtask || false)
+                    selectedIssue?.isSubtask ||
+                    false
                   }
                 >
                   {createMutation.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-                  {t('worklog.log_hours', { hours: totalHours })}
+                  {t('worklog.log_hours', { hours: totalHoursFormatted })}
                 </Button>
               </div>
             </div>

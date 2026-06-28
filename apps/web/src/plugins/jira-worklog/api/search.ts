@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api } from '@/shared/api/client';
 
 export interface WorklogSearchFilters {
@@ -56,10 +56,38 @@ export interface IssueSearchResult {
   total: number;
 }
 
-export function useWorklogSearch() {
-  return useMutation({
-    mutationFn: (filters: WorklogSearchFilters) =>
-      api.post<WorklogSearchResult>('/api/worklogs/search', filters),
+export function useWorklogSearch(filters: WorklogSearchFilters | null, enabled = true) {
+  return useQuery({
+    queryKey: ['worklogs', 'search', filters],
+    queryFn: async () => {
+      const res = await api.post<WorklogSearchResult>(
+        '/api/worklogs/search',
+        filters as WorklogSearchFilters,
+      );
+      if (!res.success || !res.data) {
+        throw new Error(res.error?.code ?? 'Failed to search worklogs');
+      }
+      return res.data;
+    },
+    enabled: enabled && filters !== null,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useIssueSearch(filters: WorklogSearchFilters | null, enabled = true) {
+  return useQuery({
+    queryKey: ['issues', 'search', filters],
+    queryFn: async () => {
+      const res = await api.post<IssueSearchResult>(
+        '/api/issues/search',
+        filters as WorklogSearchFilters,
+      );
+      if (!res.success || !res.data) {
+        throw new Error(res.error?.code ?? 'Failed to search issues');
+      }
+      return res.data;
+    },
+    enabled: enabled && filters !== null,
   });
 }
 
@@ -77,12 +105,5 @@ export function useWorklogsByDateRange(dateFrom: string, dateTo: string, enabled
     enabled: enabled && !!dateFrom && !!dateTo,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
-  });
-}
-
-export function useIssueSearch() {
-  return useMutation({
-    mutationFn: (filters: WorklogSearchFilters) =>
-      api.post<IssueSearchResult>('/api/issues/search', filters),
   });
 }

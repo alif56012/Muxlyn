@@ -14,6 +14,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/components/ui/button';
+import { cn, formatHours } from '@/shared/lib/utils';
 
 type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay';
 
@@ -46,6 +47,7 @@ interface FullCalendarWrapperProps {
   onDatesSet?: (dateFrom: string, dateTo: string) => void;
   onDatesIntervalChange?: (start: Date, end: Date) => void;
   dayCellClasses?: (date: string) => string[];
+  disabled?: boolean;
 }
 
 const STORAGE_KEY = 'muxlyn-calendar-view';
@@ -71,6 +73,7 @@ export function FullCalendarWrapper({
   onDatesSet,
   onDatesIntervalChange,
   dayCellClasses,
+  disabled,
 }: FullCalendarWrapperProps) {
   const { t, i18n } = useTranslation();
   const [currentView, setCurrentView] = useState<CalendarView>(getStoredView);
@@ -130,7 +133,7 @@ export function FullCalendarWrapper({
   };
 
   return (
-    <div className="fc-custom space-y-3 overflow-x-auto">
+    <div className={cn("fc-custom space-y-3 overflow-x-auto", disabled && "opacity-50 pointer-events-none select-none")}>
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
@@ -260,7 +263,7 @@ export function FullCalendarWrapper({
             const p = arg.event.extendedProps;
             const tooltip = [
               `${p.issueKey}: ${p.issueSummary}`,
-              `${p.hours}h`,
+              `${formatHours(p.hours)}`,
               p.author ? `By: ${p.author}` : '',
               p.comment || '',
             ]
@@ -270,7 +273,7 @@ export function FullCalendarWrapper({
               <div title={tooltip} className="overflow-hidden">
                 <div className="truncate font-medium">{p.issueSummary}</div>
                 <div className="truncate opacity-75 text-[10px]">
-                  {p.issueKey} · {p.hours}h
+                  {p.issueKey} · {formatHours(p.hours)}
                 </div>
               </div>
             );

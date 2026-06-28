@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { Workflow, WorkflowEdge, WorkflowNode, WorkflowRun } from '@/features/workflow/types';
 import { api } from '@/shared/api/client';
-import type { Workflow, WorkflowRun, WorkflowNode, WorkflowEdge } from '@/features/workflow/types';
 
 interface ApiWorkflowStep {
   id: string;
@@ -61,28 +61,34 @@ function toWorkflow(api: ApiWorkflow): Workflow {
     name: api.name,
     description: api.description,
     stepCount: api.stepCount ?? (api.steps ?? []).length,
-    args: Array.isArray(api.args) ? api.args.map((a) => ({
-      name: a.name,
-      defaultValue: a.default_value,
-    })) : [],
-    nodes: (api.steps ?? []).map((s): WorkflowNode => ({
-      id: s.id,
-      type: 'custom',
-      position: { x: s.positionX ?? 0, y: s.positionY ?? 0 },
-      data: {
-        stepType: s.type as WorkflowNode['data']['stepType'],
-        label: s.label,
-        config: s.config as WorkflowNode['data']['config'],
-      },
-    })),
-    edges: (api.edges ?? []).map((e): WorkflowEdge => ({
-      id: e.id,
-      source: e.sourceStepId,
-      sourceHandle: e.sourceHandle,
-      target: e.targetStepId,
-      targetHandle: e.targetHandle,
-      label: e.label,
-    })),
+    args: Array.isArray(api.args)
+      ? api.args.map((a) => ({
+          name: a.name,
+          defaultValue: a.default_value,
+        }))
+      : [],
+    nodes: (api.steps ?? []).map(
+      (s): WorkflowNode => ({
+        id: s.id,
+        type: 'custom',
+        position: { x: s.positionX ?? 0, y: s.positionY ?? 0 },
+        data: {
+          stepType: s.type as WorkflowNode['data']['stepType'],
+          label: s.label,
+          config: s.config as WorkflowNode['data']['config'],
+        },
+      }),
+    ),
+    edges: (api.edges ?? []).map(
+      (e): WorkflowEdge => ({
+        id: e.id,
+        source: e.sourceStepId,
+        sourceHandle: e.sourceHandle,
+        target: e.targetStepId,
+        targetHandle: e.targetHandle,
+        label: e.label,
+      }),
+    ),
     createdAt: api.created_at,
     updatedAt: api.updated_at,
   };
@@ -130,10 +136,10 @@ export function useWorkflow(id: string | undefined) {
     queryKey: ['workflow', id],
     queryFn: async () => {
       const res = await api.get<{ workflow: ApiWorkflow }>(`/api/workflows/${id}`);
-      if (!res.success) {
+      if (!res.success || !res.data) {
         throw new Error(res.error?.code ?? 'Failed to fetch workflow');
       }
-      return toWorkflow(res.data!.workflow);
+      return toWorkflow(res.data.workflow);
     },
     enabled: !!id,
   });
@@ -143,8 +149,14 @@ export function useCreateWorkflow() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: { connection_id: string; name: string; description?: string; args?: { name: string; default_value?: string }[]; steps?: unknown[]; edges?: unknown[] }) =>
-      api.post('/api/workflows', body),
+    mutationFn: (body: {
+      connection_id: string;
+      name: string;
+      description?: string;
+      args?: { name: string; default_value?: string }[];
+      steps?: unknown[];
+      edges?: unknown[];
+    }) => api.post('/api/workflows', body),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['workflows'] }),
   });
 }
@@ -164,7 +176,10 @@ export function useUpdateWorkflow() {
       steps?: unknown[];
       edges?: unknown[];
     }) => api.put(`/api/workflows/${id}`, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['workflows'] }),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['workflows'] });
+      qc.invalidateQueries({ queryKey: ['workflow', vars.id] });
+    },
   });
 }
 
@@ -202,6 +217,8 @@ export function useStartRun() {
 }
 
 export function useSaveRunStep() {
+  const qc = useQueryClient();
+
   return useMutation({
     mutationFn: ({
       runId,
@@ -218,6 +235,15 @@ export function useSaveRunStep() {
       error?: string;
       duration?: number;
     }) =>
-      api.post(`/api/workflows/runs/${runId}/steps`, { step_id: stepId, status, output, error, duration }),
+      api.post(`/api/workflows/runs/${runId}/steps`, {
+        step_id: stepId,
+        status,
+        output,
+        error,
+        duration,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['workflow-runs'] });
+    },
   });
 }

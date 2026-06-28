@@ -1,38 +1,33 @@
-import { useState, useCallback, useMemo } from 'react';
 import {
-  Search,
-  Filter,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Calendar,
   ChevronLeft,
   ChevronRight,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
   Columns3,
+  Filter,
   Loader2,
-  X,
-  Calendar,
+  Search,
 } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
   DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
+import { Input } from '@/shared/components/ui/input';
 import { cn } from '@/shared/lib/utils';
-import {
-  useWorklogSearch,
-  type WorklogSearchFilters,
-  type WorklogSearchItem,
-} from '../api/search';
+import { useWorklogSearch, type WorklogSearchFilters, type WorklogSearchItem } from '../api/search';
 import { useBulkSelection } from '../hooks/use-bulk-selection';
 import { BulkActionToolbar } from './bulk-action-toolbar';
-import { BulkEditDialog } from './bulk-edit-dialog';
 import { BulkDeleteDialog } from './bulk-delete-dialog';
-import { WorklogEditDialog } from './worklog-edit-dialog';
+import { BulkEditDialog } from './bulk-edit-dialog';
 import { WorklogDeleteDialog } from './worklog-delete-dialog';
+import { WorklogEditDialog } from './worklog-edit-dialog';
 
 type SortField = 'date' | 'hours' | 'issueKey' | 'projectKey' | 'author';
 type SortDir = 'asc' | 'desc';
@@ -65,61 +60,43 @@ export function HistoryTab() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [page, setPage] = useState(1);
-  const [visibleColumns, setVisibleColumns] =
-    useState<ColumnKey[]>(DEFAULT_VISIBLE);
+  const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(DEFAULT_VISIBLE);
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
-  const [editTarget, setEditTarget] =
-    useState<WorklogSearchItem | null>(null);
-  const [deleteTarget, setDeleteTarget] =
-    useState<WorklogSearchItem | null>(null);
+  const [editTarget, setEditTarget] = useState<WorklogSearchItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<WorklogSearchItem | null>(null);
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [searchFilters, setSearchFilters] = useState<WorklogSearchFilters | null>(null);
 
-  const searchMutation = useWorklogSearch();
+  const { data: result, isLoading } = useWorklogSearch(searchFilters);
   const selection = useBulkSelection();
 
-  const result = searchMutation.data?.success
-    ? searchMutation.data.data
-    : null;
-  const isLoading = searchMutation.isPending;
-
-  const doSearch = useCallback(
-    (p?: number) => {
-      const filters: WorklogSearchFilters = { page: p ?? page, pageSize: 50 };
+  const buildFilters = useCallback(
+    (p: number): WorklogSearchFilters => {
+      const filters: WorklogSearchFilters = { page: p, pageSize: 50 };
       if (freeText) filters.freeText = freeText;
       if (dateFrom) filters.dateFrom = dateFrom;
       if (dateTo) filters.dateTo = dateTo;
-      searchMutation.mutate(filters);
+      return filters;
     },
-    [freeText, dateFrom, dateTo, page, searchMutation],
+    [freeText, dateFrom, dateTo],
   );
 
   const handleSearch = useCallback(() => {
     setPage(1);
     selection.clear();
-    const filters: WorklogSearchFilters = { page: 1, pageSize: 50 };
-    if (freeText) filters.freeText = freeText;
-    if (dateFrom) filters.dateFrom = dateFrom;
-    if (dateTo) filters.dateTo = dateTo;
-    searchMutation.mutate(filters);
-  }, [freeText, dateFrom, dateTo, searchMutation, selection]);
+    setSearchFilters(buildFilters(1));
+  }, [buildFilters, selection]);
 
   const handlePage = useCallback(
     (p: number) => {
       setPage(p);
       selection.clear();
-      const filters: WorklogSearchFilters = {
-        page: p,
-        pageSize: 50,
-      };
-      if (freeText) filters.freeText = freeText;
-      if (dateFrom) filters.dateFrom = dateFrom;
-      if (dateTo) filters.dateTo = dateTo;
-      searchMutation.mutate(filters);
+      setSearchFilters(buildFilters(p));
     },
-    [freeText, dateFrom, dateTo, searchMutation, selection],
+    [buildFilters, selection],
   );
 
   const sortedItems = useMemo(() => {
@@ -153,8 +130,7 @@ export function HistoryTab() {
   };
 
   const sortIcon = (field: SortField) => {
-    if (sortField !== field)
-      return <ArrowUpDown className="ml-1 h-3 w-3 opacity-30" />;
+    if (sortField !== field) return <ArrowUpDown className="ml-1 h-3 w-3 opacity-30" />;
     return sortDir === 'asc' ? (
       <ArrowUp className="ml-1 h-3 w-3" />
     ) : (
@@ -162,10 +138,7 @@ export function HistoryTab() {
     );
   };
 
-  const allIds = useMemo(
-    () => sortedItems.map((i) => i.worklogId),
-    [sortedItems],
-  );
+  const allIds = useMemo(() => sortedItems.map((i) => i.worklogId), [sortedItems]);
 
   const cellValue = (item: WorklogSearchItem, col: ColumnKey) => {
     switch (col) {
@@ -223,9 +196,7 @@ export function HistoryTab() {
         </div>
         <div className="flex items-center gap-2">
           <Button onClick={handleSearch} disabled={isLoading} size="sm">
-            {isLoading && (
-              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-            )}
+            {isLoading && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
             Search
           </Button>
 
@@ -243,9 +214,7 @@ export function HistoryTab() {
                   checked={visibleColumns.includes(col.key)}
                   onCheckedChange={(checked) =>
                     setVisibleColumns((prev) =>
-                      checked
-                        ? [...prev, col.key]
-                        : prev.filter((c) => c !== col.key),
+                      checked ? [...prev, col.key] : prev.filter((c) => c !== col.key),
                     )
                   }
                 >
@@ -287,9 +256,7 @@ export function HistoryTab() {
                   <th className="w-10 px-3 py-2">
                     <Checkbox
                       checked={selection.isAllSelected(allIds)}
-                      onCheckedChange={() =>
-                        selection.toggleAll(allIds)
-                      }
+                      onCheckedChange={() => selection.toggleAll(allIds)}
                     />
                   </th>
                   {visibleColumns.map((col) => (
@@ -315,10 +282,7 @@ export function HistoryTab() {
                       }}
                     >
                       <span className="inline-flex items-center">
-                        {
-                          ALL_COLUMNS.find((c) => c.key === col)
-                            ?.label
-                        }
+                        {ALL_COLUMNS.find((c) => c.key === col)?.label}
                         {(col === 'date' ||
                           col === 'hours' ||
                           col === 'issueKey' ||
@@ -335,22 +299,14 @@ export function HistoryTab() {
                     key={item.worklogId}
                     className={cn(
                       'border-b last:border-b-0 hover:bg-muted/30 cursor-pointer',
-                      selection.isSelected(item.worklogId) &&
-                        'bg-primary/5',
+                      selection.isSelected(item.worklogId) && 'bg-primary/5',
                     )}
                     onClick={() => setEditTarget(item)}
                   >
-                    <td
-                      className="w-10 px-3 py-2"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <td className="w-10 px-3 py-2" onClick={(e) => e.stopPropagation()}>
                       <Checkbox
-                        checked={selection.isSelected(
-                          item.worklogId,
-                        )}
-                        onCheckedChange={() =>
-                          selection.toggle(item.worklogId)
-                        }
+                        checked={selection.isSelected(item.worklogId)}
+                        onCheckedChange={() => selection.toggle(item.worklogId)}
                       />
                     </td>
                     {visibleColumns.map((col) => (
@@ -358,18 +314,14 @@ export function HistoryTab() {
                         key={col}
                         className={cn(
                           'px-3 py-2',
-                          col === 'issueSummary' &&
-                            'max-w-[200px] truncate',
-                          col === 'comment' &&
-                            'max-w-[150px] truncate',
+                          col === 'issueSummary' && 'max-w-[200px] truncate',
+                          col === 'comment' && 'max-w-[150px] truncate',
                           col === 'hours' && 'text-right tabular-nums',
                           col === 'date' && 'whitespace-nowrap',
                         )}
                       >
                         {col === 'issueKey' ? (
-                          <span className="font-medium">
-                            {cellValue(item, col)}
-                          </span>
+                          <span className="font-medium">{cellValue(item, col)}</span>
                         ) : (
                           cellValue(item, col)
                         )}
@@ -381,15 +333,10 @@ export function HistoryTab() {
               <tfoot>
                 <tr className="border-t bg-muted/30 font-medium text-sm">
                   <td className="px-3 py-2" />
-                  <td
-                    className="px-3 py-2"
-                    colSpan={visibleColumns.length - 1}
-                  >
+                  <td className="px-3 py-2" colSpan={visibleColumns.length - 1}>
                     Total
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
-                    {result.totalHours}h
-                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums">{result.totalHours}h</td>
                 </tr>
               </tfoot>
             </table>
@@ -398,8 +345,7 @@ export function HistoryTab() {
           {result.totalPages > 1 && (
             <div className="flex items-center justify-between text-sm text-muted-foreground">
               <span>
-                Page {result.page} of {result.totalPages} ·{' '}
-                {result.total} worklogs
+                Page {result.page} of {result.totalPages} · {result.total} worklogs
               </span>
               <div className="flex items-center gap-1">
                 <Button
