@@ -1,11 +1,5 @@
-import {
-  JiraNetworkError,
-  JiraInvalidTokenError,
-} from '../../shared/errors';
-import {
-  getActiveJiraConnection,
-  type JiraConnection,
-} from './jira-worklog-client';
+import { JiraInvalidTokenError, JiraNetworkError } from '../../shared/errors';
+import { getActiveJiraConnection, type JiraConnection } from './jira-worklog-client';
 
 interface JiraSearchIssue {
   id: string;
@@ -88,11 +82,7 @@ function authHeader(connection: JiraConnection): string {
   return `Basic ${btoa(`${connection.email}:${connection.apiToken}`)}`;
 }
 
-async function jiraPost(
-  connection: JiraConnection,
-  path: string,
-  body: unknown,
-): Promise<unknown> {
+async function jiraPost(connection: JiraConnection, path: string, body: unknown): Promise<unknown> {
   const url = `${connection.jiraUrl}${path}`;
   let response: Response;
   try {
@@ -113,8 +103,7 @@ async function jiraPost(
   console.log(`[jiraPost] ${url} → ${response.status}`);
   if (response.status === 401) throw new JiraInvalidTokenError();
   if (response.status === 403) throw new JiraNetworkError('Permission denied');
-  if (response.status === 429)
-    throw new JiraNetworkError('Jira rate limit reached.');
+  if (response.status === 429) throw new JiraNetworkError('Jira rate limit reached.');
   if (!response.ok) {
     const text = await response.text().catch(() => '');
     console.error(`[jiraPost] non-ok body:`, text);
@@ -123,10 +112,7 @@ async function jiraPost(
   return response.json();
 }
 
-async function jiraGet(
-  connection: JiraConnection,
-  path: string,
-): Promise<unknown> {
+async function jiraGet(connection: JiraConnection, path: string): Promise<unknown> {
   const url = `${connection.jiraUrl}${path}`;
   let response: Response;
   try {
@@ -143,8 +129,7 @@ async function jiraGet(
   }
   if (response.status === 401) throw new JiraInvalidTokenError();
   if (response.status === 403) throw new JiraNetworkError('Permission denied');
-  if (response.status === 429)
-    throw new JiraNetworkError('Jira rate limit reached.');
+  if (response.status === 429) throw new JiraNetworkError('Jira rate limit reached.');
   if (!response.ok) {
     const text = await response.text().catch(() => '');
     console.error(`[jiraGet] non-ok body:`, text);
@@ -177,7 +162,7 @@ function buildJql(filters: WorklogSearchFilters): string {
   if (filters.dateFrom) {
     parts.push(`worklogDate >= "${filters.dateFrom}"`);
   }
-  return parts.join(' AND ') + ' order by updated DESC';
+  return `${parts.join(' AND ')} order by updated DESC`;
 }
 
 function buildIssueJql(filters: WorklogSearchFilters, activeProjects: string[]): string {
@@ -189,7 +174,7 @@ function buildIssueJql(filters: WorklogSearchFilters, activeProjects: string[]):
       // Direct issue key match - bypass active projects scoping to allow manual entry of other project keys
       return `key = "${query.toUpperCase()}" AND issuetype in standardIssueTypes() AND issuetype != "Epic"`;
     } else {
-      parts.push(`summary ~ "${query}*"`);
+      parts.push(`(key ~ "${query.toUpperCase()}*" OR summary ~ "${query}*")`);
     }
   }
 
@@ -210,7 +195,7 @@ function buildIssueJql(filters: WorklogSearchFilters, activeProjects: string[]):
     parts.push(`status = "${filters.status}"`);
   }
 
-  return parts.join(' AND ') + ' order by updated DESC';
+  return `${parts.join(' AND ')} order by updated DESC`;
 }
 
 function extractCommentText(comment: unknown): string | undefined {
@@ -218,9 +203,7 @@ function extractCommentText(comment: unknown): string | undefined {
   const c = comment as Record<string, unknown>;
   const content = c.content as Array<Record<string, unknown>> | undefined;
   const firstParagraph = content?.[0];
-  const textNodes = firstParagraph?.content as
-    | Array<Record<string, unknown>>
-    | undefined;
+  const textNodes = firstParagraph?.content as Array<Record<string, unknown>> | undefined;
   const firstText = textNodes?.[0];
   return typeof firstText?.text === 'string' ? firstText.text : undefined;
 }
@@ -244,26 +227,21 @@ export async function searchWorklogs(
     };
     currentUserAccountId = myself.accountId;
   } catch {
-    console.warn('[searchWorklogs] Failed to fetch current user, author filtering will be unavailable');
+    console.warn(
+      '[searchWorklogs] Failed to fetch current user, author filtering will be unavailable',
+    );
   }
 
-  const searchData = (await jiraPost(
-    connection,
-    '/rest/api/3/search/jql',
-    {
-      jql,
-      fields: ['summary', 'issuetype', 'status', 'project', 'assignee'],
-      maxResults: MAX_ISSUES,
-    },
-  )) as { issues: JiraSearchIssue[]; total: number };
+  const searchData = (await jiraPost(connection, '/rest/api/3/search/jql', {
+    jql,
+    fields: ['summary', 'issuetype', 'status', 'project', 'assignee'],
+    maxResults: MAX_ISSUES,
+  })) as { issues: JiraSearchIssue[]; total: number };
 
   const issues = searchData.issues ?? [];
 
   // startedAfter is exclusive — subtract 1ms so worklogs at midnight are included
-  const startMs = Math.max(
-    0,
-    (filters.dateFrom ? new Date(filters.dateFrom).getTime() : 0) - 1,
-  );
+  const startMs = Math.max(0, (filters.dateFrom ? new Date(filters.dateFrom).getTime() : 0) - 1);
   const endMs = filters.dateTo
     ? new Date(filters.dateTo).getTime() + MS_PER_DAY
     : Date.now() + MS_PER_DAY;
@@ -288,11 +266,7 @@ export async function searchWorklogs(
       for (const wl of worklogsData.worklogs ?? []) {
         // filter to current user's own worklogs only
         const authorAccountId = wl.author?.accountId;
-        if (
-          currentUserAccountId &&
-          authorAccountId &&
-          authorAccountId !== currentUserAccountId
-        ) {
+        if (currentUserAccountId && authorAccountId && authorAccountId !== currentUserAccountId) {
           continue;
         }
 
@@ -320,23 +294,23 @@ export async function searchWorklogs(
     }
   }
 
-  allWorklogs.sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-  );
+  allWorklogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const total = allWorklogs.length;
   const totalPages = Math.ceil(total / pageSize) || 1;
   const start = (page - 1) * pageSize;
   const paged = allWorklogs.slice(start, start + pageSize);
-  const totalHours =
-    Math.round(allWorklogs.reduce((sum, wl) => sum + wl.hours, 0) * 100) / 100;
+  const totalHours = Math.round(allWorklogs.reduce((sum, wl) => sum + wl.hours, 0) * 100) / 100;
 
   return { items: paged, total, page, pageSize, totalPages, totalHours };
 }
 
 const activeProjectsCache = new Map<string, { projects: string[]; expires: number }>();
 
-async function getUserActiveProjects(connection: JiraConnection, userId: string): Promise<string[]> {
+async function getUserActiveProjects(
+  connection: JiraConnection,
+  userId: string,
+): Promise<string[]> {
   const cached = activeProjectsCache.get(userId);
   if (cached && cached.expires > Date.now()) {
     return cached.projects;
@@ -370,22 +344,18 @@ async function getUserActiveProjects(connection: JiraConnection, userId: string)
 export async function searchIssues(
   userId: string,
   filters: WorklogSearchFilters,
-  page: number = 1,
-  pageSize: number = 50,
+  _page: number = 1,
+  _pageSize: number = 50,
 ): Promise<{ items: IssueSearchResult[]; total: number }> {
   const connection = await getActiveJiraConnection(userId);
   const activeProjects = await getUserActiveProjects(connection, userId);
   const jql = buildIssueJql(filters, activeProjects);
 
-  const searchData = (await jiraPost(
-    connection,
-    '/rest/api/3/search/jql',
-    {
-      jql,
-      fields: ['summary', 'issuetype', 'status', 'project', 'assignee'],
-      maxResults: MAX_ISSUES,
-    },
-  )) as { issues: JiraSearchIssue[]; total: number };
+  const searchData = (await jiraPost(connection, '/rest/api/3/search/jql', {
+    jql,
+    fields: ['summary', 'issuetype', 'status', 'project', 'assignee'],
+    maxResults: MAX_ISSUES,
+  })) as { issues: JiraSearchIssue[]; total: number };
 
   const items = (searchData.issues ?? []).map((issue) => ({
     id: issue.id,

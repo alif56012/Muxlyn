@@ -10,7 +10,7 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react';
-import { lazy, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBulkCreateWorklogs } from '@/plugins/jira-worklog/api/bulk-worklog';
 import { useWorklogsByDateRange } from '@/plugins/jira-worklog/api/search';
@@ -503,7 +503,17 @@ export default function CalendarPage() {
         </TabsContent>
 
         <TabsContent value="smart-worklog">
-          <SmartWorklogPage />
+          <Suspense
+            fallback={
+              <div className="mx-auto max-w-4xl space-y-4 p-6">
+                <div className="h-8 w-56 rounded-md bg-muted animate-pulse" />
+                <div className="h-24 rounded-lg border bg-muted/30 animate-pulse" />
+                <div className="h-48 rounded-lg border bg-muted/30 animate-pulse" />
+              </div>
+            }
+          >
+            <SmartWorklogPage />
+          </Suspense>
         </TabsContent>
       </Tabs>
 
