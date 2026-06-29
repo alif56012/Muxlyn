@@ -75,7 +75,7 @@ export function DistributeTaskEditor() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => setShowForm(true)}
+            onClick={() => setShowForm(!showForm)}
             disabled={distributeTasks.length >= MAX_TASKS}
           >
             <Plus size={14} className="mr-1" />
@@ -86,7 +86,7 @@ export function DistributeTaskEditor() {
       </div>
 
       {/* Add form */}
-      {(showForm || distributeTasks.length === 0) && distributeTasks.length < MAX_TASKS && (
+      {showForm && distributeTasks.length < MAX_TASKS && (
         <div className="flex gap-2 rounded-lg border bg-muted/30 p-3 items-end">
           <IssueSearchSelect
             value={selectedIssue}
