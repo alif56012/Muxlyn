@@ -63,7 +63,8 @@ export const worklogRoutes = new Elysia({ prefix: '/api' })
         );
       }
 
-      const started = `${body.date}T00:00:00.000+0000`;
+      const started =
+        body.started ?? `${body.date}T00:00:00.000+0000`;
 
       const worklog = await createJiraWorklog(
         connection,
@@ -104,6 +105,7 @@ export const worklogRoutes = new Elysia({ prefix: '/api' })
         date: t.String({ format: 'date' }),
         durationSeconds: t.Number({ minimum: 1 }),
         comment: t.Optional(t.String()),
+        started: t.Optional(t.String()),
       }),
       response: {
         201: t.Object({

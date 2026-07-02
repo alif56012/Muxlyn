@@ -76,10 +76,16 @@ export function LogWorkTab({ onWorklogCreated }: LogWorkTabProps) {
     (issue: IssueSearchItem) => {
       if (issue.isSubtask) return;
       setCreating((prev) => ({ ...prev, [issue.id]: true }));
+      const now = new Date();
+      const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const started = new Date(`${date}T00:00:00`)
+        .toISOString()
+        .replace('Z', '+0000');
       const input: CreateWorklogInput = {
         issueId: issue.id,
-        date: new Date().toISOString().slice(0, 10),
+        date,
         durationSeconds: 7200,
+        started,
       };
       createMutation.mutate(input, {
         onSuccess: (res) => {

@@ -6,6 +6,7 @@ export interface CreateWorklogInput {
   date: string;
   durationSeconds: number;
   comment?: string;
+  started?: string;
 }
 
 export interface CreateWorklogResult {
